@@ -3,73 +3,185 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#3aa8cc" />
+  <meta name="theme-color" content="#c8dfe8" />
   <title>모모와 다락방의 수상한 요괴들 — 편지 이벤트</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;500&family=Noto+Sans+KR:wght@300;400;500&family=Gaegu:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;500&family=Noto+Sans+KR:wght@300;400;500&family=Gaegu:wght@300;400;700&family=Shippori+Mincho:wght@400;500&display=swap" rel="stylesheet" />
 </head>
 <body>
 <div id="app">
 
+<!-- ═══ 수채화 배경 레이어 (모든 화면 공통) ═══ -->
+<div id="app-bg" aria-hidden="true">
+  <svg viewBox="0 0 390 844" xmlns="http://www.w3.org/2000/svg"
+       style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+    <defs>
+      <!-- 수채화 번짐 필터 -->
+      <filter id="wc" x="-20%" y="-20%" width="140%" height="140%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.04 0.06" numOctaves="4" seed="8" result="noise"/>
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="12" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+      <filter id="wc2" x="-10%" y="-10%" width="120%" height="120%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="3" seed="5" result="noise"/>
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+      <!-- 하늘 그라디언트 -->
+      <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"   stop-color="#e8f4fa"/>
+        <stop offset="40%"  stop-color="#c8e4f0"/>
+        <stop offset="100%" stop-color="#a8d4e8"/>
+      </linearGradient>
+      <!-- 바다 그라디언트 -->
+      <linearGradient id="seaG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"   stop-color="#7abccc"/>
+        <stop offset="50%"  stop-color="#4a90a8"/>
+        <stop offset="100%" stop-color="#2a6880"/>
+      </linearGradient>
+    </defs>
+
+    <!-- 하늘 배경 -->
+    <rect width="390" height="844" fill="url(#skyG)"/>
+
+    <!-- 구름들 — 수채화 번짐 효과 -->
+    <g filter="url(#wc)" opacity="0.75">
+      <ellipse cx="80"  cy="120" rx="90" ry="28" fill="rgba(255,255,255,0.72)"/>
+      <ellipse cx="60"  cy="108" rx="55" ry="20" fill="rgba(255,255,255,0.60)"/>
+      <ellipse cx="110" cy="116" rx="45" ry="18" fill="rgba(255,255,255,0.55)"/>
+      <ellipse cx="280" cy="80"  rx="70" ry="22" fill="rgba(255,255,255,0.65)"/>
+      <ellipse cx="310" cy="70"  rx="45" ry="16" fill="rgba(255,255,255,0.55)"/>
+      <ellipse cx="260" cy="88"  rx="40" ry="15" fill="rgba(255,255,255,0.50)"/>
+      <ellipse cx="180" cy="55"  rx="50" ry="16" fill="rgba(255,255,255,0.45)"/>
+    </g>
+
+    <!-- 복숭아빛 구름 포인트 -->
+    <g filter="url(#wc)" opacity="0.30">
+      <ellipse cx="320" cy="95"  rx="40" ry="14" fill="#f0b8a8"/>
+      <ellipse cx="90"  cy="130" rx="35" ry="12" fill="#f0c0a8"/>
+    </g>
+
+    <!-- 수평선 + 바다 -->
+    <rect x="0" y="480" width="390" height="364" fill="url(#seaG)"/>
+
+    <!-- 수평선 흐림 -->
+    <rect x="0" y="474" width="390" height="20" fill="rgba(168,212,232,0.50)" filter="url(#wc2)"/>
+
+    <!-- 섬 실루엣들 — 세토내해 파노라마 -->
+    <g filter="url(#wc2)">
+      <!-- 먼 섬 (연하게) -->
+      <path d="M0,430 Q40,395 90,398 Q140,401 175,418 Q200,430 220,426 Q250,420 280,428 Q320,438 355,430 Q375,425 390,428 L390,490 L0,490 Z"
+            fill="#88b8c8" opacity="0.45"/>
+      <!-- 중간 섬 -->
+      <path d="M-10,452 Q25,430 65,432 Q100,434 130,442 Q160,450 185,447 Q210,444 240,452 L240,495 L-10,495 Z"
+            fill="#5a9aaa" opacity="0.55"/>
+      <!-- 가까운 섬 오른쪽 -->
+      <path d="M260,460 Q295,440 340,444 Q370,448 400,455 L400,500 L260,500 Z"
+            fill="#4a8898" opacity="0.50"/>
+      <!-- 아주 가까운 섬 (진하게) -->
+      <path d="M300,472 Q330,458 370,462 Q385,464 400,468 L400,495 L300,495 Z"
+            fill="#3a7888" opacity="0.60"/>
+    </g>
+
+    <!-- 바다 반짝임 -->
+    <g opacity="0.20">
+      <ellipse cx="60"  cy="560" rx="30" ry="4" fill="white"/>
+      <ellipse cx="180" cy="600" rx="25" ry="3" fill="white"/>
+      <ellipse cx="300" cy="540" rx="20" ry="3" fill="white"/>
+      <ellipse cx="130" cy="650" rx="18" ry="2" fill="white"/>
+      <ellipse cx="260" cy="700" rx="22" ry="3" fill="white"/>
+      <ellipse cx="80"  cy="740" rx="15" ry="2" fill="white"/>
+      <ellipse cx="330" cy="780" rx="20" ry="2" fill="white"/>
+    </g>
+
+    <!-- 복숭아 장식 — 타이틀 영역 오른쪽 -->
+    <g transform="translate(340, 200)" opacity="0.18">
+      <!-- 복숭아 열매 -->
+      <path d="M0,0 Q15,-20 30,0 Q45,20 30,38 Q15,52 0,38 Q-12,20 0,0 Z" fill="#e07868"/>
+      <path d="M0,0 Q15,-20 30,0" fill="none" stroke="#c05848" stroke-width="1.5" opacity="0.5"/>
+      <!-- 잎 -->
+      <path d="M15,-22 Q25,-36 18,-44 Q10,-36 15,-22 Z" fill="#7a9a60"/>
+      <path d="M12,-24 L18,-44" stroke="#6a8a50" stroke-width="0.8" fill="none"/>
+    </g>
+    <g transform="translate(24, 260)" opacity="0.14">
+      <path d="M0,0 Q12,-16 24,0 Q36,16 24,30 Q12,42 0,30 Q-10,16 0,0 Z" fill="#f0a898"/>
+      <path d="M12,-18 Q20,-30 14,-36 Q8,-30 12,-18 Z" fill="#8aaa68"/>
+    </g>
+  </svg>
+</div>
+
   <!-- ① WRITE -->
   <div class="scr on" id="s-write">
-    <!-- 배경 장식: 세토내해 섬 실루엣 -->
-    <div class="sea-deco" aria-hidden="true">
-      <svg viewBox="0 0 390 120" xmlns="http://www.w3.org/2000/svg" style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:390px;opacity:0.18;pointer-events:none;z-index:1">
-        <path d="M0,80 Q30,60 70,65 Q110,70 140,58 Q170,46 210,52 Q250,58 280,48 Q310,38 340,44 Q365,50 390,42 L390,120 L0,120 Z" fill="#1a5a70"/>
-        <path d="M0,95 Q40,78 80,82 Q120,86 160,76 Q200,66 240,72 Q280,78 320,68 Q355,60 390,65 L390,120 L0,120 Z" fill="#2a7a9e"/>
-      </svg>
-    </div>
     <div class="topbar">
       <div class="badge">모모와 다락방의 수상한 요괴들 × 특별 이벤트</div>
       <h1 class="page-title" id="write-title">전하지 못한 마음을<br>바다에 띄워 보세요</h1>
-      <p class="page-sub" id="write-sub">그리운 누군가에게 편지를 써서 바다에 보내보세요.</p>
+      <p class="page-sub" id="write-sub">그리운 누군가에게 편지를 써서<br>세토내해 바다에 보내보세요.</p>
     </div>
+
     <div class="card-wrap">
       <div class="lcard" id="lcard-main">
+
+        <!-- 편지지 우하단 마메 엿보기 장식 -->
+        <div aria-hidden="true" style="position:absolute;right:8px;bottom:56px;z-index:0;opacity:0.10;pointer-events:none">
+          <svg viewBox="0 0 60 80" width="48" xmlns="http://www.w3.org/2000/svg">
+            <!-- 마메 (작은 요괴) 실루엣 -->
+            <ellipse cx="30" cy="28" rx="18" ry="20" fill="#9878a8"/>
+            <circle cx="22" cy="24" r="5" fill="white"/>
+            <circle cx="38" cy="24" r="5" fill="white"/>
+            <circle cx="22" cy="24" r="2.5" fill="#2c2018"/>
+            <circle cx="38" cy="24" r="2.5" fill="#2c2018"/>
+            <ellipse cx="10" cy="22" rx="7" ry="5" fill="#9878a8"/>
+            <ellipse cx="50" cy="22" rx="7" ry="5" fill="#9878a8"/>
+            <path d="M14,46 Q20,56 30,58 Q40,56 46,46 L44,65 Q38,72 30,74 Q22,72 16,65 Z" fill="#9878a8"/>
+          </svg>
+        </div>
+
         <!-- To -->
         <div class="letter-to-row">
           <span class="to-label">To.</span>
-          <input class="to-input" id="to-input" type="text" placeholder="받는 사람 이름" maxlength="20" />
+          <input class="to-input" id="to-input" type="text" placeholder="받는 사람 이름을 써 주세요" maxlength="20" />
         </div>
+
         <!-- 탭 -->
         <div class="tab-bar">
           <button class="tbtn on" id="bt" onclick="sw('text')">✏️ 편지</button>
           <button class="tbtn" id="bd" onclick="sw('draw')">🖌 그림</button>
-          <button class="tbtn" id="bs" onclick="sw('sticker')">✨ 꾸미기</button>
+          <button class="tbtn" id="bs" onclick="sw('sticker')">🍑 꾸미기</button>
         </div>
-        <!-- 편지 -->
+
+        <!-- 편지 쓰기 -->
         <div class="tab-pane on" id="tp-t">
-          <textarea class="lta gaegu" id="ltxt" placeholder="보고 싶은 사람에게&#10;전하지 못했던 말들을 써 주세요…" oninput="syncPreview()"></textarea>
+          <textarea class="lta" id="ltxt"
+            placeholder="보고 싶은 사람에게&#10;전하지 못했던 말들을 써 주세요…"
+            oninput="syncPreview()"></textarea>
         </div>
-        <!-- 그림 -->
+
+        <!-- 그림 그리기 -->
         <div class="tab-pane" id="tp-d">
           <canvas id="dc"></canvas>
           <div class="dtool">
-            <div class="cdot on" style="background:#1c2e26" data-c="#1c2e26" onclick="pc(this,'s')"></div>
-            <div class="cdot" style="background:#2a5fa8" data-c="#2a5fa8" onclick="pc(this,'s')"></div>
-            <div class="cdot" style="background:#b03830" data-c="#b03830" onclick="pc(this,'s')"></div>
-            <div class="cdot" style="background:#8a5810" data-c="#8a5810" onclick="pc(this,'s')"></div>
-            <div class="cdot" style="background:#3a7040" data-c="#3a7040" onclick="pc(this,'s')"></div>
-            <div class="cdot" style="background:#7a3a8a" data-c="#7a3a8a" onclick="pc(this,'s')"></div>
+            <div class="cdot on" style="background:#2c2018" data-c="#2c2018" onclick="pc(this,'s')"></div>
+            <div class="cdot" style="background:#4a90a8" data-c="#4a90a8" onclick="pc(this,'s')"></div>
+            <div class="cdot" style="background:#e07868" data-c="#e07868" onclick="pc(this,'s')"></div>
+            <div class="cdot" style="background:#8a9a60" data-c="#8a9a60" onclick="pc(this,'s')"></div>
+            <div class="cdot" style="background:#9878a8" data-c="#9878a8" onclick="pc(this,'s')"></div>
+            <div class="cdot" style="background:#6898b8" data-c="#6898b8" onclick="pc(this,'s')"></div>
             <input type="range" class="bsr" id="bsr" min="1" max="16" value="4" step="1" />
             <button class="clrbtn" onclick="clr('s')">지우기</button>
           </div>
         </div>
-        <!-- 꾸미기: 편지 미리보기 + 스티커 -->
+
+        <!-- 꾸미기 -->
         <div class="tab-pane" id="tp-s">
           <div class="sticker-area">
-            <!-- 실시간 편지 미리보기 -->
             <div class="preview-wrap">
               <canvas id="preview-canvas"></canvas>
               <div id="sticker-layer"></div>
             </div>
-            <!-- 스티커 선택 -->
             <div class="sticker-grid">
-              <button class="sticker-btn" onclick="addSticker('🌊')">🌊</button>
+              <button class="sticker-btn" onclick="addSticker('🍑')">🍑</button>
               <button class="sticker-btn" onclick="addSticker('⛵')">⛵</button>
+              <button class="sticker-btn" onclick="addSticker('🌊')">🌊</button>
               <button class="sticker-btn" onclick="addSticker('🐟')">🐟</button>
               <button class="sticker-btn" onclick="addSticker('🌸')">🌸</button>
               <button class="sticker-btn" onclick="addSticker('⭐')">⭐</button>
@@ -78,18 +190,19 @@
               <button class="sticker-btn" onclick="addSticker('🌙')">🌙</button>
               <button class="sticker-btn" onclick="addSticker('💫')">💫</button>
               <button class="sticker-btn" onclick="addSticker('🌺')">🌺</button>
-              <button class="sticker-btn" onclick="addSticker('🍀')">🍀</button>
               <button class="sticker-btn" onclick="addSticker('✨')">✨</button>
             </div>
-            <button class="clrbtn" style="margin:4px 14px 8px" onclick="clearStickers()">스티커 모두 지우기</button>
+            <button class="clrbtn" style="margin:4px 12px 6px" onclick="clearStickers()">스티커 모두 지우기</button>
           </div>
         </div>
+
         <!-- From -->
         <div class="letter-from-row">
           <span class="from-label">From.</span>
           <input class="from-input" id="from-input" type="text" placeholder="보내는 사람 이름" maxlength="20" />
         </div>
-      </div>
+      </div><!-- /lcard -->
+
       <div class="bot-area">
         <button class="sendbtn" id="send-main-btn" onclick="doSend()">
           <span class="rk">⛵</span>
@@ -99,7 +212,7 @@
     </div>
   </div>
 
-  <!-- ② ANIM : 편지 접힘 → 봉투 → 배 출항 -->
+  <!-- ② ANIM -->
   <div class="scr" id="s-anim" style="padding:0;overflow:hidden;">
     <div class="sea-canvas-box"><canvas id="animC"></canvas></div>
   </div>
@@ -112,16 +225,16 @@
         <p id="sea-msg">편지가 바다 위를 떠다니고 있어요 ✦</p>
         <p class="sub" id="sea-sub">마음에 드시나요?</p>
       </div>
-      <button class="evbtn" id="reply-btn"         style="display:none" onclick="goReply()">✉️ 답장 보내기</button>
-      <button class="evbtn" id="share-btn"         style="display:none" onclick="goShare()">편지 전하기 →</button>
-      <button class="evbtn" id="edit-btn"          style="display:none;background:rgba(255,255,255,0.22);border:1px solid rgba(255,255,255,0.5);color:#fff;box-shadow:none" onclick="editLetter()">✏️ 다시 쓰기</button>
+      <button class="evbtn"    id="reply-btn"          style="display:none" onclick="goReply()">✉️ 답장 보내기</button>
+      <button class="evbtn"    id="share-btn"          style="display:none" onclick="goShare()">🍑 편지 전하기</button>
+      <button class="ghostbtn" id="edit-btn"           style="display:none" onclick="editLetter()">✏️ 다시 쓰기</button>
       <button class="ghostbtn" id="apply-from-sea-btn" style="display:none" onclick="goApply()">🎟 이벤트 응모하기</button>
     </div>
   </div>
 
-  <!-- ③ SHARE (PC 폴백용) -->
+  <!-- ④ SHARE -->
   <div class="scr" id="s-share">
-    <div class="topbar" style="padding-bottom:18px">
+    <div class="topbar" style="padding-bottom:16px">
       <div class="badge">모모와 다락방의 수상한 요괴들 × 특별 이벤트</div>
       <p class="float-em" style="margin-top:8px">💌</p>
       <h2 class="page-title">편지가 바다에<br>떠 있어요</h2>
@@ -129,19 +242,19 @@
     </div>
     <div class="share-wrap">
       <div class="share-link-card">
-        <p style="font-size:11px;color:var(--text-muted);font-family:'Noto Serif KR',serif;margin-bottom:8px">✦ 공유 링크</p>
+        <p style="font-size:11px;color:var(--text-muted);font-family:'Shippori Mincho',serif;margin-bottom:8px;letter-spacing:.04em">✦ 공유 링크</p>
         <div class="slinkbox" id="slink" onclick="copyLink()">
           <span>🔗</span><span id="slink-txt">링크 생성 중…</span>
         </div>
         <p class="copyhint" id="copyhint">탭하면 복사돼요</p>
       </div>
-      <button class="evbtn" onclick="goShare()" style="margin-bottom:4px">↗ 공유하기</button>
-      <button class="evbtn" style="background:linear-gradient(135deg,#c87858,#a85838)" onclick="goApply()">🎟 이벤트 응모하기</button>
-      <button class="ghostbtn" onclick="goSea()">내 편지 바다 보기</button>
+      <button class="evbtn" onclick="goShare()" style="margin-bottom:2px">↗ 공유하기</button>
+      <button class="evbtn" style="background:var(--blue-accent);box-shadow:0 3px 0 var(--sea-deep),0 5px 14px rgba(42,104,128,0.25)" onclick="goApply()">🎟 이벤트 응모하기</button>
+      <button class="ghostbtn" style="background:rgba(42,104,128,0.15);border-color:rgba(120,180,200,0.40);color:rgba(255,255,255,0.80)" onclick="goSea()">내 편지 바다 보기</button>
     </div>
   </div>
 
-  <!-- ④ SHARED SEA -->
+  <!-- ⑤ SHARED SEA -->
   <div class="scr" id="s-shared">
     <div class="sea-canvas-box"><canvas id="sharedC"></canvas></div>
     <div class="sea-sheet">
@@ -150,14 +263,14 @@
         <p class="sub">서로의 편지가 만났습니다</p>
       </div>
       <button class="evbtn" onclick="goApply()">🎟 이벤트 응모하기</button>
-      <button class="ghostbtn" onclick="goShare()">편지 전하기 →</button>
-      <button class="ghostbtn" style="font-size:11px;padding:10px" onclick="restartAll()">처음으로</button>
+      <button class="ghostbtn" onclick="goShare()">🍑 편지 전하기</button>
+      <button class="ghostbtn" style="font-size:11px;padding:9px" onclick="restartAll()">처음으로</button>
     </div>
   </div>
 
-  <!-- ⑤ APPLY -->
+  <!-- ⑥ APPLY -->
   <div class="scr" id="s-apply">
-    <div class="topbar" style="padding-bottom:16px">
+    <div class="topbar" style="padding-bottom:14px">
       <div class="badge">모모와 다락방의 수상한 요괴들 × 특별 이벤트</div>
       <h1 class="page-title">이벤트 응모하기</h1>
       <p class="page-sub">편지를 바다에 띄운 기념으로<br>이벤트에 응모해 보세요!</p>
@@ -176,34 +289,76 @@
           <label class="alabel">이메일</label>
           <input class="ainput" id="a-email" type="email" placeholder="example@email.com" />
         </div>
-        <div class="agree-row">
-          <label class="agree-label">
-            <input type="checkbox" id="a-agree" class="agree-check" />
-            <span class="agree-txt">개인정보 수집 및 이용에 동의합니다 <span class="req">*</span></span>
-          </label>
-          <button class="agree-detail-btn" onclick="toggleAgreeDetail()">내용 보기 ▾</button>
-        </div>
-        <div class="agree-detail" id="agree-detail" style="display:none">
-          수집 항목: 이름, 연락처, 이메일<br>
-          수집 목적: 이벤트 당첨자 선정 및 경품 발송<br>
-          보유 기간: 이벤트 종료 후 30일
+        <div class="afield">
+          <div class="agree-row">
+            <label class="agree-label">
+              <input type="checkbox" id="a-agree" class="agree-check" />
+              <span class="agree-txt">개인정보 수집 및 이용에 동의합니다 <span class="req">*</span></span>
+            </label>
+            <button class="agree-detail-btn" onclick="toggleAgreeDetail()">내용 보기 ▾</button>
+          </div>
+          <div class="agree-detail" id="agree-detail" style="display:none">
+            수집 항목: 이름, 연락처, 이메일<br>
+            수집 목적: 이벤트 당첨자 선정 및 경품 발송<br>
+            보유 기간: 이벤트 종료 후 30일
+          </div>
         </div>
         <p class="apply-err" id="apply-err"></p>
-        <button class="sendbtn" style="margin-top:8px" onclick="doApply()">응모 완료</button>
-        <button class="ghostbtn" style="margin-top:8px;background:rgba(255,255,255,0.12);border:1px solid rgba(90,160,200,0.3);color:#2a5f80" onclick="goSea()">← 편지 바다로 돌아가기</button>
+        <button class="sendbtn" style="margin-top:4px" onclick="doApply()">응모 완료</button>
+        <button class="ghostbtn" style="background:rgba(160,130,90,0.10);border:1px solid rgba(160,130,90,0.25);color:var(--text-mid)" onclick="goSea()">← 편지 바다로 돌아가기</button>
       </div>
     </div>
   </div>
 
-  <!-- ⑥ DONE -->
+  <!-- ⑦ DONE -->
   <div class="scr" id="s-apply-done">
-    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;gap:10px">
-      <p style="font-size:52px">🎉</p>
-      <h2 class="page-title">응모 완료!</h2>
-      <p class="page-sub">당첨자 발표를 기대해 주세요.<br>편지는 계속 바다 위를 떠다니고 있어요 ✦</p>
-      <button class="evbtn" style="width:100%;max-width:320px;margin-top:8px" onclick="goSea()">내 편지 바다 보기</button>
-      <button class="evbtn" style="width:100%;max-width:320px;background:#a87020;box-shadow:0 4px 14px rgba(168,112,32,0.28)" onclick="goShare()">편지 전하기 →</button>
-      <button class="ghostbtn" style="width:100%;max-width:320px" onclick="restartAll()">✉️ 편지 한 통 더 쓰기</button>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;gap:12px;text-align:center">
+      <!-- 요괴 3인방 환영 일러스트 -->
+      <svg viewBox="0 0 200 120" width="180" xmlns="http://www.w3.org/2000/svg" style="opacity:0.85;margin-bottom:4px">
+        <!-- 마메 (왼쪽, 작은 보라 요괴) -->
+        <g transform="translate(20,40)">
+          <ellipse cx="20" cy="22" rx="14" ry="16" fill="#9878a8"/>
+          <circle cx="14" cy="18" r="4" fill="white"/><circle cx="26" cy="18" r="4" fill="white"/>
+          <circle cx="14" cy="18" r="2" fill="#2c2018"/><circle cx="26" cy="18" r="2" fill="#2c2018"/>
+          <ellipse cx="6"  cy="17" rx="5" ry="4" fill="#9878a8"/>
+          <ellipse cx="34" cy="17" rx="5" ry="4" fill="#9878a8"/>
+          <path d="M8,36 Q14,44 20,46 Q26,44 32,36 L30,55 Q26,60 20,62 Q14,60 10,55 Z" fill="#9878a8"/>
+          <!-- 황금 허리띠 -->
+          <rect x="8" y="34" width="24" height="4" rx="2" fill="#c8a050"/>
+        </g>
+        <!-- 카와 (가운데, 올리브 요괴) -->
+        <g transform="translate(78,10)">
+          <ellipse cx="22" cy="28" rx="16" ry="22" fill="#8a9a60"/>
+          <circle cx="15" cy="24" r="5" fill="white"/><circle cx="29" cy="24" r="5" fill="white"/>
+          <circle cx="15" cy="24" r="2.5" fill="#2c2018"/><circle cx="29" cy="24" r="2.5" fill="#2c2018"/>
+          <path d="M8,48 Q15,58 22,60 Q29,58 36,48 L34,72 Q28,78 22,80 Q16,78 10,72 Z" fill="#8a9a60"/>
+          <!-- 올리브 가운 -->
+          <path d="M6,44 Q14,42 22,44 Q30,42 38,44 L36,70 Q28,76 22,78 Q16,76 8,70 Z" fill="#a8b878" opacity="0.6"/>
+        </g>
+        <!-- 이와 (오른쪽, 큰 파란 요괴) -->
+        <g transform="translate(138,20)">
+          <ellipse cx="24" cy="24" rx="20" ry="22" fill="#7898a8"/>
+          <circle cx="16" cy="20" r="6" fill="white"/><circle cx="32" cy="20" r="6" fill="white"/>
+          <circle cx="16" cy="20" r="3" fill="#c8a820"/><circle cx="32" cy="20" r="3" fill="#c8a820"/>
+          <!-- 수염 -->
+          <path d="M10,32 Q18,36 24,35 Q30,36 38,32" fill="none" stroke="#5a4030" stroke-width="2"/>
+          <path d="M8,44 Q16,42 24,44 Q32,42 40,44 L38,75 Q30,82 24,84 Q18,82 10,75 Z" fill="#6898b8"/>
+          <!-- 파란 도포 허리띠 -->
+          <rect x="8" y="44" width="32" height="4" rx="2" fill="#2a4868"/>
+        </g>
+        <!-- 축하 별들 -->
+        <text x="100" y="10" text-anchor="middle" font-size="16" opacity="0.8">🎉</text>
+        <text x="50"  y="8"  font-size="10" opacity="0.6">✦</text>
+        <text x="155" y="12" font-size="10" opacity="0.6">✦</text>
+      </svg>
+
+      <h2 class="page-title" style="color:var(--text-dark)">응모 완료!</h2>
+      <p class="page-sub" style="color:var(--text-mid)">
+        요괴들이 당신의 응모를 전달했어요.<br>당첨자 발표를 기대해 주세요 ✦
+      </p>
+      <button class="sendbtn" style="width:100%;max-width:300px;margin-top:8px" onclick="goSea()">내 편지 바다 보기</button>
+      <button class="sendbtn" style="width:100%;max-width:300px;background:var(--blue-accent);box-shadow:0 4px 0 var(--sea-deep),0 6px 16px rgba(42,104,128,0.28)" onclick="goShare()">🍑 편지 전하기</button>
+      <button class="ghostbtn" style="width:100%;max-width:300px;background:rgba(160,130,90,0.12);border:1px solid rgba(160,130,90,0.28);color:var(--text-mid)" onclick="restartAll()">✉️ 편지 한 통 더 쓰기</button>
     </div>
   </div>
 
