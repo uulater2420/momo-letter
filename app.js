@@ -1,6 +1,37 @@
 // ── app.js ────────────────────────────────────────────────────────
 import { saveLetter, loadLetter, saveApply } from './firebase.js';
-import { playFoldAnimation }                 from './animation.js';
+
+// ── 수채화 번짐 전환 ──────────────────────────────────────────────
+// 편지 보내기 버튼 → 수채물감이 화면을 물들이듯 바다로 전환
+function inkTransition(color, onMidpoint) {
+  return new Promise(resolve => {
+    const overlay = document.getElementById('ink-overlay');
+    overlay.style.background = color;
+    overlay.style.opacity = '0';
+    overlay.style.transform = 'scale(0.2)';
+    overlay.style.borderRadius = '100%';
+
+    // 번짐 시작
+    overlay.classList.remove('fading');
+    overlay.classList.add('spreading');
+
+    // 중간 지점 (화면이 덮였을 때) 화면 전환
+    setTimeout(() => {
+      onMidpoint && onMidpoint();
+    }, 500);
+
+    // 번짐 완료 후 페이드아웃
+    setTimeout(() => {
+      overlay.classList.remove('spreading');
+      overlay.classList.add('fading');
+      setTimeout(() => {
+        overlay.classList.remove('fading');
+        overlay.style.opacity = '0';
+        resolve();
+      }, 700);
+    }, 1100);
+  });
+}
 
 const S = {
   mode:'text',
@@ -181,7 +212,7 @@ function capture(){
 }
 
 // ── 바다 애니메이션 ───────────────────────────────────────────────
-function startSea(canvasId,items){
+function startSea(canvasId, items, fadeIn = false){
   if(S.seaRaf){cancelAnimationFrame(S.seaRaf);S.seaRaf=null;}
   const canvas=document.getElementById(canvasId);
   const box=canvas.parentElement;
@@ -193,7 +224,10 @@ function startSea(canvasId,items){
   const letters=items.map(it=>{
     const iw=it.img.naturalWidth||320,ih=it.img.naturalHeight||220;
     const sw=W*it.scaleW,sh=sw*(ih/iw);
-    return{img:it.img,x:it.xr*W,y:it.yr*H,vx:it.vx,vy:it.vy,angle:it.angle,va:it.va,sw,sh,alpha:0,phase:it.phase};
+    return{img:it.img,x:it.xr*W,y:it.yr*H,vx:it.vx,vy:it.vy,angle:it.angle,va:it.va,sw,sh,
+      alpha: fadeIn ? 0 : 0.93,   // fadeIn이면 0에서 시작, 아니면 바로 표시
+      targetAlpha: 0.93,
+      phase:it.phase};
   });
   const WV=[{ry:.48,amp:7,spd:.007,ph:0,al:.08},{ry:.57,amp:5,spd:.010,ph:1.1,al:.06},{ry:.65,amp:9,spd:.006,ph:2.3,al:.10},{ry:.74,amp:5,spd:.012,ph:.8,al:.06},{ry:.83,amp:8,spd:.008,ph:1.9,al:.08}];
   let t=0;
@@ -205,7 +239,8 @@ function startSea(canvasId,items){
     for(let i=0;i<14;i++){const sx=((i*137+t*13)%(W+30))-15;const sy=H*.36+(i*41)%(H*.5);const sa=.18+.42*Math.abs(Math.sin(t*.06+i));ctx.fillStyle=`rgba(255,255,255,${sa})`;ctx.beginPath();ctx.arc(sx,sy,1,0,Math.PI*2);ctx.fill();}
   }
   function dl(l){const bY=Math.sin(t*.04+l.phase)*4,bA=Math.sin(t*.03+l.phase)*.030;ctx.save();ctx.globalAlpha=l.alpha;ctx.translate(l.x+l.sw/2,l.y+l.sh/2+bY);ctx.rotate(l.angle+bA);ctx.shadowColor='rgba(0,50,100,.15)';ctx.shadowBlur=8;ctx.shadowOffsetY=3;ctx.drawImage(l.img,-l.sw/2,-l.sh/2,l.sw,l.sh);ctx.restore();}
-  function frame(){t++;ctx.clearRect(0,0,W,H);bg();for(const l of letters){if(l.alpha<.93)l.alpha=Math.min(.93,l.alpha+.011);dl(l);l.x+=l.vx;l.y+=l.vy;l.angle+=l.va;if(l.x<W*.04||l.x>W*.70)l.vx*=-1;if(l.y<H*.06||l.y>H*.62)l.vy*=-1;}S.seaRaf=requestAnimationFrame(frame);}
+  const fadeSpeed = fadeIn ? 0.007 : 0.013;
+  function frame(){t++;ctx.clearRect(0,0,W,H);bg();for(const l of letters){if(l.alpha<(l.targetAlpha||0.93))l.alpha=Math.min(l.targetAlpha||0.93,l.alpha+fadeSpeed);dl(l);l.x+=l.vx;l.y+=l.vy;l.angle+=l.va;if(l.x<W*.04||l.x>W*.70)l.vx*=-1;if(l.y<H*.06||l.y>H*.62)l.vy*=-1;}S.seaRaf=requestAnimationFrame(frame);}
   frame();
 }
 
@@ -229,19 +264,20 @@ window.doSend=async function(){
   S.shareUrl=`${location.origin}${location.pathname}?id=${S.letterId||'preview'}`;
   showLoading(false);
 
-  // 접힘 애니메이션 화면으로 전환
-  show('s-anim');
-  playFoldAnimation(S.senderImg, ()=>{
-    // 애니메이션 끝나면 바다로
-    document.getElementById('sea-msg').textContent='편지가 바다 위를 떠다니고 있어요 ✦';
-    document.getElementById('sea-sub').textContent='마음에 드시나요?';
-    document.getElementById('share-btn').style.display='block';
-    document.getElementById('edit-btn').style.display='block';
-    document.getElementById('reply-btn').style.display='none';
-    document.getElementById('apply-from-sea-btn').style.display='block';
-    show('s-sea');
-    startSea('seaC',[{img:S.senderImg,xr:.30,yr:.20,vx:.30,vy:-.07,angle:-.04,va:.00018,scaleW:.65,phase:0}]);
-  });
+  // 수채화 번짐 전환 — 복숭아빛 → 바다색으로 물들이며 전환
+  await inkTransition(
+    'radial-gradient(circle, rgba(240,168,152,0.95) 0%, rgba(74,144,168,0.92) 100%)',
+    () => {
+      document.getElementById('sea-msg').textContent='편지가 바다 위를 떠다니고 있어요 ✦';
+      document.getElementById('sea-sub').textContent='마음에 드시나요?';
+      document.getElementById('share-btn').style.display='block';
+      document.getElementById('edit-btn').style.display='block';
+      document.getElementById('reply-btn').style.display='none';
+      document.getElementById('apply-from-sea-btn').style.display='block';
+      show('s-sea');
+      startSea('seaC',[{img:S.senderImg,xr:.30,yr:.20,vx:.30,vy:-.07,angle:-.04,va:.00018,scaleW:.65,phase:0}], true);
+    }
+  );
 };
 
 // ── 수정하기 (바다 화면 → 편지 작성으로 복귀, 내용 유지) ───────────
@@ -312,15 +348,17 @@ async function doReplySend(){
   }
   showLoading(false);
 
-  // 접힘 애니메이션
-  show('s-anim');
-  playFoldAnimation(S.replyImg, ()=>{
-    show('s-shared');
-    const items=[];
-    if(S.senderImg) items.push({img:S.senderImg,xr:.06,yr:.14,vx:.22,vy:-.05,angle:-.05,va:.00015,scaleW:.54,phase:0});
-    if(S.replyImg)  items.push({img:S.replyImg, xr:.38,yr:.36,vx:.19,vy:-.04,angle:.06, va:-.00015,scaleW:.50,phase:1.8});
-    startSea('sharedC',items);
-  });
+  // 수채화 번짐 전환 — 따뜻한 황금빛으로 물들이며 공유 바다로
+  await inkTransition(
+    'radial-gradient(circle, rgba(200,160,80,0.95) 0%, rgba(74,144,168,0.92) 100%)',
+    () => {
+      show('s-shared');
+      const items=[];
+      if(S.senderImg) items.push({img:S.senderImg,xr:.06,yr:.14,vx:.22,vy:-.05,angle:-.05,va:.00015,scaleW:.54,phase:0});
+      if(S.replyImg)  items.push({img:S.replyImg, xr:.38,yr:.36,vx:.19,vy:-.04,angle:.06, va:-.00015,scaleW:.50,phase:1.8});
+      startSea('sharedC', items, true);
+    }
+  );
 }
 
 // ── 응모 ─────────────────────────────────────────────────────────

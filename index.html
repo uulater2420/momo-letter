@@ -213,11 +213,6 @@
     </div>
   </div>
 
-  <!-- ② ANIM -->
-  <div class="scr" id="s-anim" style="padding:0;overflow:hidden;">
-    <div class="sea-canvas-box"><canvas id="animC"></canvas></div>
-  </div>
-
   <!-- ③ SEA -->
   <div class="scr" id="s-sea">
     <div class="sea-canvas-box"><canvas id="seaC"></canvas></div>
@@ -371,9 +366,11 @@
     </div>
   </div>
 
+  <!-- 수채화 번짐 전환 오버레이 -->
+  <div id="ink-overlay"></div>
+
 </div>
 <script type="module" src="firebase.js"></script>
-<script type="module" src="animation.js"></script>
 <script type="module" src="app.js"></script>
 </body>
 </html>
