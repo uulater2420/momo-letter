@@ -16,18 +16,17 @@
 
 import { initializeApp }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc }
+import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, onSnapshot }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 // ▼ Firebase 콘솔에서 복사한 설정값 붙여넣기 ▼
 const firebaseConfig = {
-  apiKey: "AIzaSyAXxYu3FxeD8v5Il0n8XRbPAzPz6fvNlsU",
-  authDomain: "momo-letter.firebaseapp.com",
-  projectId: "momo-letter",
-  storageBucket: "momo-letter.firebasestorage.app",
-  messagingSenderId: "715586990451",
-  appId: "1:715586990451:web:6779e305d4d83f5dccd506",
-  measurementId: "G-MFWK4LRLLR"
+  apiKey:            "여기에-붙여넣기",
+  authDomain:        "여기에-붙여넣기",
+  projectId:         "여기에-붙여넣기",
+  storageBucket:     "여기에-붙여넣기",
+  messagingSenderId: "여기에-붙여넣기",
+  appId:             "여기에-붙여넣기",
 };
 // ▲ ──────────────────────────────────────────────────────────── ▲
 
@@ -59,5 +58,18 @@ export async function saveApply({ name, phone, email, letterId }){
   await addDoc(collection(db, 'applies'), {
     name, phone, email: email||'', letterId: letterId||'',
     createdAt: Date.now(),
+  });
+}
+
+/**
+ * 편지 실시간 감지 — 답장이 도착하면 콜백 호출
+ * @param {string} id
+ * @param {function} callback - (data) => void
+ * @returns {function} unsubscribe
+ */
+export function watchLetter(id, callback){
+  const ref = doc(db, 'letters', id);
+  return onSnapshot(ref, (snap) => {
+    if(snap.exists()) callback(snap.data());
   });
 }

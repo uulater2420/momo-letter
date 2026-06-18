@@ -147,6 +147,7 @@
         <div class="tab-bar">
           <button class="tbtn on" id="bt" onclick="sw('text')">✏️ 편지</button>
           <button class="tbtn" id="bd" onclick="sw('draw')">🖌 그림</button>
+          <button class="tbtn" id="bm" onclick="sw('mixed')">✏️🖌 혼합</button>
           <button class="tbtn" id="bs" onclick="sw('sticker')">🍑 꾸미기</button>
         </div>
 
@@ -168,7 +169,7 @@
             <div class="cdot" style="background:#9878a8" data-c="#9878a8" onclick="pc(this,'s')"></div>
             <div class="cdot" style="background:#6898b8" data-c="#6898b8" onclick="pc(this,'s')"></div>
             <input type="range" class="bsr" id="bsr" min="1" max="16" value="4" step="1" />
-            <button class="clrbtn" onclick="clr('s')">지우기</button>
+            <button class="clrbtn" onclick="clr()">지우기</button>
           </div>
         </div>
 
@@ -197,6 +198,28 @@
           </div>
         </div>
 
+        <!-- 혼합: 텍스트 + 그림 동시 작성 -->
+        <div class="tab-pane" id="tp-m">
+          <textarea class="lta" id="mtxt"
+            placeholder="글을 쓰고, 아래 캔버스에 그림도 그려보세요…"
+            style="min-height:28vw;font-size:19px;line-height:32px"
+            oninput="syncPreview()"></textarea>
+          <div style="border-top:1px dashed rgba(160,130,90,0.22);padding:6px 12px 4px;font-size:11px;color:var(--text-muted);font-family:'Noto Sans KR',sans-serif">
+            🖌 아래에 그림을 그려 편지 위에 겹칩니다
+          </div>
+          <canvas id="dc" style="border-top:none"></canvas>
+          <div class="dtool">
+            <div class="cdot on" style="background:#2c2018" data-c="#2c2018" onclick="pc(this)"></div>
+            <div class="cdot" style="background:#4a90a8" data-c="#4a90a8" onclick="pc(this)"></div>
+            <div class="cdot" style="background:#e07868" data-c="#e07868" onclick="pc(this)"></div>
+            <div class="cdot" style="background:#8a9a60" data-c="#8a9a60" onclick="pc(this)"></div>
+            <div class="cdot" style="background:#9878a8" data-c="#9878a8" onclick="pc(this)"></div>
+            <div class="cdot" style="background:#6898b8" data-c="#6898b8" onclick="pc(this)"></div>
+            <input type="range" class="bsr" id="bsr" min="1" max="16" value="4" step="1" />
+            <button class="clrbtn" onclick="clr()">지우기</button>
+          </div>
+        </div>
+
         <!-- From -->
         <div class="letter-from-row">
           <span class="from-label">From.</span>
@@ -222,6 +245,7 @@
         <p class="sub" id="sea-sub">마음에 드시나요?</p>
       </div>
       <button class="evbtn"    id="reply-btn"          style="display:none" onclick="goReply()">✉️ 답장 보내기</button>
+      <button class="ghostbtn" id="new-letter-btn"      style="display:none" onclick="goNewLetter()">✉️ 새 편지 쓰기</button>
       <button class="evbtn"    id="share-btn"          style="display:none" onclick="goShare()">🍑 편지 전하기</button>
       <button class="ghostbtn" id="edit-btn"           style="display:none" onclick="editLetter()">✏️ 다시 쓰기</button>
       <button class="ghostbtn" id="apply-from-sea-btn" style="display:none" onclick="goApply()">🎟 이벤트 응모하기</button>
