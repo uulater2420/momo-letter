@@ -158,22 +158,25 @@ html, body {
 
 /* ── To. 수신인 ─────────────────────────────────────────── */
 .letter-to-row {
-  display: flex; align-items: center; gap: 5px;
-  padding: 12px 14px 10px;
-  border-bottom: 1px solid rgba(160,130,90,0.15);
-  background: rgba(254,232,224,0.25);  /* 복숭아빛 헤더 */
+  display: flex; align-items: center; gap: 8px;
+  padding: 13px 16px 12px;
+  border-bottom: 1.5px solid rgba(224,120,104,0.25);
+  background: rgba(254,228,216,0.55);
   position: relative; z-index: 2;
 }
 .to-label {
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 13px; color: var(--peach-mid); white-space: nowrap;
-  font-weight: 500;
+  font-size: 15px; color: var(--peach-deep);
+  white-space: nowrap; font-weight: 700;
+  letter-spacing: 0.05em;
+  min-width: 36px;
 }
 .to-input {
   flex: 1; border: none; outline: none; background: transparent;
-  font-family: 'Gaegu', cursive; font-size: 16px; color: var(--ink);
+  font-family: 'Gaegu', cursive; font-size: 19px; color: var(--ink);
+  font-weight: 400;
 }
-.to-input::placeholder { color: rgba(160,100,80,0.38); font-style: italic; font-size: 14px; }
+.to-input::placeholder { color: rgba(160,100,80,0.40); font-style: italic; font-size: 16px; }
 
 /* ── 탭 바 ───────────────────────────────────────────────── */
 .tab-bar {
@@ -287,22 +290,25 @@ html, body {
 
 /* ── From. 서명 ──────────────────────────────────────────── */
 .letter-from-row {
-  display: flex; align-items: center; gap: 5px;
-  padding: 10px 14px 13px;
-  border-top: 1px solid rgba(160,130,90,0.12);
-  background: rgba(254,232,224,0.18);
+  display: flex; align-items: center; gap: 8px;
+  padding: 11px 16px 14px;
+  border-top: 1.5px solid rgba(224,120,104,0.22);
+  background: rgba(254,228,216,0.45);
   position: relative; z-index: 2;
 }
 .from-label {
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 12px; color: var(--peach-mid); white-space: nowrap;
-  font-weight: 500;
+  font-size: 14px; color: var(--peach-deep);
+  white-space: nowrap; font-weight: 700;
+  letter-spacing: 0.05em;
+  min-width: 52px;
 }
 .from-input {
   flex: 1; border: none; outline: none; background: transparent;
-  font-family: 'Gaegu', cursive; font-size: 15px; color: var(--ink);
+  font-family: 'Gaegu', cursive; font-size: 17px; color: var(--ink);
+  font-weight: 400;
 }
-.from-input::placeholder { color: rgba(160,100,80,0.30); font-style: italic; }
+.from-input::placeholder { color: rgba(160,100,80,0.38); font-style: italic; font-size: 15px; }
 
 /* ═══════════════════════════════════════════════════════════
    BOTTOM BUTTON
