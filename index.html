@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#3aa8cc" />
+  <title>모모와 다락방의 수상한 요괴들 — 편지 이벤트</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;500&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+<div id="app">
+
+  <!-- ① WRITE : 발신인 편지 작성 -->
+  <div class="scr on" id="s-write">
+    <div class="topbar">
+      <div class="badge">모모와 다락방의 수상한 요괴들 × 특별 이벤트</div>
+      <h1 class="page-title">전하지 못한 마음을<br>바다에 띄워 보세요</h1>
+      <p class="page-sub">그리운 누군가에게 편지를 쓰거나<br>그림을 그려 바다에 보내세요.</p>
+    </div>
+    <div class="card-wrap">
+      <div class="lcard">
+        <div class="chead">
+          <span class="cto">To. 그리운 당신에게</span>
+          <div class="mtabs">
+            <button class="mtab on" id="bt" onclick="sw('text')">편지</button>
+            <button class="mtab" id="bd" onclick="sw('draw')">그림</button>
+          </div>
+        </div>
+        <div class="tab-pane on" id="tp-t">
+          <textarea class="lta" id="ltxt" placeholder="보고 싶은 사람에게&#10;전하지 못했던 말들을 써 주세요…"></textarea>
+        </div>
+        <div class="tab-pane" id="tp-d">
+          <canvas id="dc"></canvas>
+          <div class="dtool">
+            <div class="cdot on" style="background:#1c2e26" data-c="#1c2e26" onclick="pc(this,'s')"></div>
+            <div class="cdot" style="background:#2a5fa8" data-c="#2a5fa8" onclick="pc(this,'s')"></div>
+            <div class="cdot" style="background:#b03830" data-c="#b03830" onclick="pc(this,'s')"></div>
+            <div class="cdot" style="background:#8a5810" data-c="#8a5810" onclick="pc(this,'s')"></div>
+            <div class="cdot" style="background:#3a7040" data-c="#3a7040" onclick="pc(this,'s')"></div>
+            <input type="range" class="bsr" id="bsr" min="1" max="14" value="4" step="1" />
+            <button class="clrbtn" onclick="clr('s')">지우기</button>
+          </div>
+        </div>
+      </div>
+      <div class="bot-area">
+        <button class="sendbtn" onclick="doSend()">
+          <span class="rk">⛵</span> 바다에 띄우기
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② SEA : 편지 바다 애니메이션 -->
+  <div class="scr" id="s-sea">
+    <div class="sea-canvas-box">
+      <canvas id="seaC"></canvas>
+    </div>
+    <div class="sea-sheet">
+      <div class="sea-pill">
+        <p id="sea-msg">편지가 바다 위를 떠다니고 있어요 ✦</p>
+        <p class="sub" id="sea-sub">잠시 감상해 보세요</p>
+      </div>
+      <button class="evbtn" id="reply-btn" style="display:none" onclick="goReply()">✉️ 답장 보내기</button>
+      <button class="ghostbtn" id="share-btn" onclick="goShare()">공유 링크 만들기 →</button>
+    </div>
+  </div>
+
+  <!-- ③ SHARE : 링크 공유 -->
+  <div class="scr" id="s-share">
+    <p class="float-em">💌</p>
+    <div class="share-card">
+      <h2 class="sh-title">편지가 바다에<br>떠 있어요</h2>
+      <p class="sh-sub">링크를 전달하면 상대방이 바다 위에서<br>당신의 편지를 발견할 수 있어요.</p>
+      <div class="slinkbox" id="slink" onclick="copyLink()">
+        <span>🔗</span>
+        <span id="slink-txt">링크 생성 중…</span>
+      </div>
+      <p class="copyhint" id="copyhint">탭하면 클립보드에 복사돼요</p>
+      <button class="evbtn" onclick="goSea()" style="margin-bottom:10px">내 편지 바다 보기</button>
+    </div>
+  </div>
+
+  <!-- ④ REPLY : 수신인 답장 작성 -->
+  <div class="scr" id="s-reply">
+    <div class="topbar">
+      <div class="badge">모모와 다락방의 수상한 요괴들 × 특별 이벤트</div>
+      <div class="reply-badge">✦ 답장 모드</div>
+      <h1 class="page-title">당신의 마음도<br>바다에 띄워 보세요</h1>
+      <p class="page-sub">답장을 보내면 두 마음이<br>같은 바다 위에서 만납니다.</p>
+    </div>
+    <div class="card-wrap">
+      <div class="lcard">
+        <div class="chead">
+          <span class="cto" style="color:#a87020">Re. 마음을 받았습니다</span>
+          <div class="mtabs">
+            <button class="mtab on" id="rbt" onclick="sw('text','r')">편지</button>
+            <button class="mtab" id="rbd" onclick="sw('draw','r')">그림</button>
+          </div>
+        </div>
+        <div class="tab-pane on" id="rtp-t">
+          <textarea class="lta" id="rtxt" placeholder="받은 마음에 답장을 써 보세요…"></textarea>
+        </div>
+        <div class="tab-pane" id="rtp-d">
+          <canvas id="rdc"></canvas>
+          <div class="dtool">
+            <div class="cdot on" style="background:#1c2e26" data-c="#1c2e26" onclick="pc(this,'r')"></div>
+            <div class="cdot" style="background:#2a5fa8" data-c="#2a5fa8" onclick="pc(this,'r')"></div>
+            <div class="cdot" style="background:#b03830" data-c="#b03830" onclick="pc(this,'r')"></div>
+            <div class="cdot" style="background:#8a5810" data-c="#8a5810" onclick="pc(this,'r')"></div>
+            <div class="cdot" style="background:#3a7040" data-c="#3a7040" onclick="pc(this,'r')"></div>
+            <input type="range" class="bsr" id="rbsr" min="1" max="14" value="4" step="1" />
+            <button class="clrbtn" onclick="clr('r')">지우기</button>
+          </div>
+        </div>
+      </div>
+      <div class="bot-area">
+        <button class="sendbtn" style="background:#a87020;box-shadow:0 4px 16px rgba(168,112,32,0.28)" onclick="doReply()">
+          💛 답장 띄우기
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑤ SHARED SEA : 두 편지 함께 -->
+  <div class="scr" id="s-shared">
+    <div class="sea-canvas-box">
+      <canvas id="sharedC"></canvas>
+    </div>
+    <div class="sea-sheet">
+      <div class="sea-pill">
+        <p>두 마음이 같은 바다 위에 있어요 ✦</p>
+        <p class="sub">서로의 편지가 만났습니다</p>
+      </div>
+      <button class="evbtn" id="event-btn">🎟 이벤트 함께 참여하기</button>
+      <button class="ghostbtn" onclick="restartAll()">처음으로</button>
+    </div>
+  </div>
+
+  <!-- 로딩 오버레이 -->
+  <div id="loading" style="display:none">
+    <div class="loading-inner">
+      <span class="loading-boat">⛵</span>
+      <p>편지를 바다에 띄우는 중…</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- Firebase SDK -->
+<script type="module" src="firebase.js"></script>
+<!-- 앱 로직 -->
+<script type="module" src="app.js"></script>
+</body>
+</html>
