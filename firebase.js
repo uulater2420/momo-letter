@@ -21,12 +21,13 @@ import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc }
 
 // ▼ Firebase 콘솔에서 복사한 설정값 붙여넣기 ▼
 const firebaseConfig = {
-  apiKey:            "여기에-붙여넣기",
-  authDomain:        "여기에-붙여넣기",
-  projectId:         "여기에-붙여넣기",
-  storageBucket:     "여기에-붙여넣기",
-  messagingSenderId: "여기에-붙여넣기",
-  appId:             "여기에-붙여넣기",
+  apiKey: "AIzaSyAXxYu3FxeD8v5Il0n8XRbPAzPz6fvNlsU",
+  authDomain: "momo-letter.firebaseapp.com",
+  projectId: "momo-letter",
+  storageBucket: "momo-letter.firebasestorage.app",
+  messagingSenderId: "715586990451",
+  appId: "1:715586990451:web:6779e305d4d83f5dccd506",
+  measurementId: "G-MFWK4LRLLR"
 };
 // ▲ ──────────────────────────────────────────────────────────── ▲
 
