@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;500&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;500&family=Noto+Sans+KR:wght@300;400;500&family=Gaegu:wght@300;400;700&display=swap" rel="stylesheet" />
 </head>
 <body>
 <div id="app">
@@ -35,7 +35,7 @@
         </div>
         <!-- 편지 -->
         <div class="tab-pane on" id="tp-t">
-          <textarea class="lta" id="ltxt" placeholder="보고 싶은 사람에게&#10;전하지 못했던 말들을 써 주세요…" oninput="syncPreview()"></textarea>
+          <textarea class="lta gaegu" id="ltxt" placeholder="보고 싶은 사람에게&#10;전하지 못했던 말들을 써 주세요…" oninput="syncPreview()"></textarea>
         </div>
         <!-- 그림 -->
         <div class="tab-pane" id="tp-d">
@@ -92,16 +92,22 @@
     </div>
   </div>
 
-  <!-- ② SEA -->
+  <!-- ② ANIM : 편지 접힘 → 봉투 → 배 출항 -->
+  <div class="scr" id="s-anim" style="padding:0;overflow:hidden;">
+    <div class="sea-canvas-box"><canvas id="animC"></canvas></div>
+  </div>
+
+  <!-- ③ SEA -->
   <div class="scr" id="s-sea">
     <div class="sea-canvas-box"><canvas id="seaC"></canvas></div>
     <div class="sea-sheet">
       <div class="sea-pill">
         <p id="sea-msg">편지가 바다 위를 떠다니고 있어요 ✦</p>
-        <p class="sub" id="sea-sub">잠시 감상해 보세요</p>
+        <p class="sub" id="sea-sub">마음에 드시나요?</p>
       </div>
-      <button class="evbtn" id="reply-btn" style="display:none" onclick="goReply()">✉️ 답장 보내기</button>
-      <button class="evbtn" id="share-btn" style="display:none;background:rgba(255,255,255,0.22);border:1px solid rgba(255,255,255,0.5);color:#fff;box-shadow:none" onclick="goShare()">편지 전하기 →</button>
+      <button class="evbtn" id="reply-btn"         style="display:none" onclick="goReply()">✉️ 답장 보내기</button>
+      <button class="evbtn" id="share-btn"         style="display:none" onclick="goShare()">편지 전하기 →</button>
+      <button class="evbtn" id="edit-btn"          style="display:none;background:rgba(255,255,255,0.22);border:1px solid rgba(255,255,255,0.5);color:#fff;box-shadow:none" onclick="editLetter()">✏️ 다시 쓰기</button>
       <button class="ghostbtn" id="apply-from-sea-btn" style="display:none" onclick="goApply()">🎟 이벤트 응모하기</button>
     </div>
   </div>
@@ -203,6 +209,7 @@
 
 </div>
 <script type="module" src="firebase.js"></script>
+<script type="module" src="animation.js"></script>
 <script type="module" src="app.js"></script>
 </body>
 </html>

@@ -236,3 +236,11 @@ html, body { height: 100%; overscroll-behavior: none; font-family: 'Noto Sans KR
 .share-action-btn:active{transform:scale(0.96);}
 .share-icon{font-size:22px;}
 .share-divider{height:1px;background:rgba(255,255,255,0.25);margin:2px 0;}
+
+/* ── 손글씨 폰트 ──────────────────────────────── */
+.gaegu, .lta.gaegu {
+  font-family: 'Gaegu', cursive !important;
+  font-size: 17px !important;
+  line-height: 32px !important;
+  letter-spacing: 0.02em;
+}
