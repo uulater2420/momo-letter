@@ -215,3 +215,24 @@ html, body { height: 100%; overscroll-behavior: none; font-family: 'Noto Sans KR
 .loading-inner { text-align: center; color: #fff; }
 .loading-boat { font-size: 40px; display: block; animation: floatY 1.2s ease-in-out infinite; margin-bottom: 12px; }
 .loading-inner p { font-family: 'Noto Serif KR', serif; font-size: 14px; }
+
+/* ── 추가 스타일 ──────────────────────────────── */
+.sticker-area{display:flex;flex-direction:column;padding:0 0 4px;}
+.preview-wrap{position:relative;margin:10px 14px 0;border-radius:8px;overflow:hidden;border:1px solid rgba(90,160,200,0.2);}
+.preview-wrap canvas{display:block;width:100%;}
+#sticker-layer{position:absolute;inset:0;pointer-events:none;}
+#sticker-layer .placed-sticker{pointer-events:auto;}
+.placed-sticker{position:absolute;font-size:28px;cursor:move;user-select:none;touch-action:none;line-height:1;transform-origin:center;}
+.sticker-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;padding:8px 14px 4px;}
+.sticker-btn{background:rgba(255,255,255,0.6);border:1px solid rgba(90,160,200,0.2);border-radius:8px;padding:6px 2px;font-size:20px;cursor:pointer;transition:transform .15s;text-align:center;}
+.sticker-btn:active{transform:scale(1.2);}
+
+/* share 화면 */
+#s-share{padding:0;}
+.share-wrap{padding:0 16px 40px;display:flex;flex-direction:column;gap:10px;}
+.share-link-card{background:rgba(255,255,255,0.85);border-radius:12px;padding:14px 16px;}
+.share-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.share-action-btn{background:rgba(255,255,255,0.85);border:1px solid rgba(255,255,255,0.6);border-radius:12px;padding:12px 4px;font-size:11px;color:#0d2e45;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;font-family:'Noto Sans KR',sans-serif;transition:transform .15s;}
+.share-action-btn:active{transform:scale(0.96);}
+.share-icon{font-size:22px;}
+.share-divider{height:1px;background:rgba(255,255,255,0.25);margin:2px 0;}

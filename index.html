@@ -13,29 +13,31 @@
 <body>
 <div id="app">
 
-  <!-- ① WRITE : 편지 작성 (발신인 / 수신인 공통) -->
+  <!-- ① WRITE -->
   <div class="scr on" id="s-write">
     <div class="topbar">
       <div class="badge">모모와 다락방의 수상한 요괴들 × 특별 이벤트</div>
       <h1 class="page-title" id="write-title">전하지 못한 마음을<br>바다에 띄워 보세요</h1>
-      <p class="page-sub" id="write-sub">그리운 누군가에게 편지를 쓰거나<br>그림을 그려 바다에 보내세요.</p>
+      <p class="page-sub" id="write-sub">그리운 누군가에게 편지를 써서 바다에 보내보세요.</p>
     </div>
     <div class="card-wrap">
-      <div class="lcard">
+      <div class="lcard" id="lcard-main">
+        <!-- To -->
         <div class="letter-to-row">
           <span class="to-label">To.</span>
-          <input class="to-input" id="to-input" type="text" placeholder="받는 사람 이름을 써 주세요" maxlength="20" />
+          <input class="to-input" id="to-input" type="text" placeholder="받는 사람 이름" maxlength="20" />
         </div>
+        <!-- 탭 -->
         <div class="tab-bar">
-          <button class="tbtn on" id="bt" onclick="sw('text')">✏️ 편지 쓰기</button>
-          <button class="tbtn" id="bd" onclick="sw('draw')">🖌 그림 그리기</button>
+          <button class="tbtn on" id="bt" onclick="sw('text')">✏️ 편지</button>
+          <button class="tbtn" id="bd" onclick="sw('draw')">🖌 그림</button>
           <button class="tbtn" id="bs" onclick="sw('sticker')">✨ 꾸미기</button>
         </div>
-        <!-- 편지 쓰기 -->
+        <!-- 편지 -->
         <div class="tab-pane on" id="tp-t">
-          <textarea class="lta" id="ltxt" placeholder="보고 싶은 사람에게&#10;전하지 못했던 말들을 써 주세요…"></textarea>
+          <textarea class="lta" id="ltxt" placeholder="보고 싶은 사람에게&#10;전하지 못했던 말들을 써 주세요…" oninput="syncPreview()"></textarea>
         </div>
-        <!-- 그림 그리기 -->
+        <!-- 그림 -->
         <div class="tab-pane" id="tp-d">
           <canvas id="dc"></canvas>
           <div class="dtool">
@@ -49,30 +51,33 @@
             <button class="clrbtn" onclick="clr('s')">지우기</button>
           </div>
         </div>
-        <!-- 꾸미기 -->
+        <!-- 꾸미기: 편지 미리보기 + 스티커 -->
         <div class="tab-pane" id="tp-s">
-          <div class="sticker-guide">편지지에 올릴 스티커를 골라보세요</div>
-          <div class="sticker-grid">
-            <button class="sticker-btn" onclick="addSticker('🌊','s')">🌊</button>
-            <button class="sticker-btn" onclick="addSticker('⛵','s')">⛵</button>
-            <button class="sticker-btn" onclick="addSticker('🐟','s')">🐟</button>
-            <button class="sticker-btn" onclick="addSticker('🌸','s')">🌸</button>
-            <button class="sticker-btn" onclick="addSticker('⭐','s')">⭐</button>
-            <button class="sticker-btn" onclick="addSticker('🍃','s')">🍃</button>
-            <button class="sticker-btn" onclick="addSticker('🦋','s')">🦋</button>
-            <button class="sticker-btn" onclick="addSticker('🌙','s')">🌙</button>
-            <button class="sticker-btn" onclick="addSticker('💫','s')">💫</button>
-            <button class="sticker-btn" onclick="addSticker('🌺','s')">🌺</button>
-            <button class="sticker-btn" onclick="addSticker('🍀','s')">🍀</button>
-            <button class="sticker-btn" onclick="addSticker('✨','s')">✨</button>
+          <div class="sticker-area">
+            <!-- 실시간 편지 미리보기 -->
+            <div class="preview-wrap">
+              <canvas id="preview-canvas"></canvas>
+              <div id="sticker-layer"></div>
+            </div>
+            <!-- 스티커 선택 -->
+            <div class="sticker-grid">
+              <button class="sticker-btn" onclick="addSticker('🌊')">🌊</button>
+              <button class="sticker-btn" onclick="addSticker('⛵')">⛵</button>
+              <button class="sticker-btn" onclick="addSticker('🐟')">🐟</button>
+              <button class="sticker-btn" onclick="addSticker('🌸')">🌸</button>
+              <button class="sticker-btn" onclick="addSticker('⭐')">⭐</button>
+              <button class="sticker-btn" onclick="addSticker('🍃')">🍃</button>
+              <button class="sticker-btn" onclick="addSticker('🦋')">🦋</button>
+              <button class="sticker-btn" onclick="addSticker('🌙')">🌙</button>
+              <button class="sticker-btn" onclick="addSticker('💫')">💫</button>
+              <button class="sticker-btn" onclick="addSticker('🌺')">🌺</button>
+              <button class="sticker-btn" onclick="addSticker('🍀')">🍀</button>
+              <button class="sticker-btn" onclick="addSticker('✨')">✨</button>
+            </div>
+            <button class="clrbtn" style="margin:4px 14px 8px" onclick="clearStickers()">스티커 모두 지우기</button>
           </div>
-          <div class="sticker-preview-label">편지지 미리보기 (드래그로 위치 조정)</div>
-          <div class="sticker-preview" id="sticker-preview">
-            <div class="sp-lines"></div>
-            <div id="sticker-layer"></div>
-          </div>
-          <button class="clrbtn" style="margin:8px 16px" onclick="clearStickers('s')">스티커 모두 지우기</button>
         </div>
+        <!-- From -->
         <div class="letter-from-row">
           <span class="from-label">From.</span>
           <input class="from-input" id="from-input" type="text" placeholder="보내는 사람 이름" maxlength="20" />
@@ -87,7 +92,7 @@
     </div>
   </div>
 
-  <!-- ② SEA : 편지 바다 -->
+  <!-- ② SEA -->
   <div class="scr" id="s-sea">
     <div class="sea-canvas-box"><canvas id="seaC"></canvas></div>
     <div class="sea-sheet">
@@ -96,26 +101,46 @@
         <p class="sub" id="sea-sub">잠시 감상해 보세요</p>
       </div>
       <button class="evbtn" id="reply-btn" style="display:none" onclick="goReply()">✉️ 답장 보내기</button>
-      <button class="ghostbtn" id="share-btn" onclick="goShare()">편지 전하기 →</button>
+      <button class="evbtn" id="share-btn" style="display:none;background:rgba(255,255,255,0.22);border:1px solid rgba(255,255,255,0.5);color:#fff;box-shadow:none" onclick="goShare()">편지 전하기 →</button>
+      <button class="ghostbtn" id="apply-from-sea-btn" style="display:none" onclick="goApply()">🎟 이벤트 응모하기</button>
     </div>
   </div>
 
-  <!-- ③ SHARE : 링크 공유 -->
+  <!-- ③ SHARE -->
   <div class="scr" id="s-share">
-    <p class="float-em">💌</p>
-    <div class="share-card">
-      <h2 class="sh-title">편지가 바다에<br>떠 있어요</h2>
-      <p class="sh-sub">아래 링크를 전달하면 상대방이<br>바다 위에서 편지를 발견할 수 있어요.</p>
-      <div class="slinkbox" id="slink" onclick="copyLink()">
-        <span>🔗</span><span id="slink-txt">링크 생성 중…</span>
+    <div class="topbar" style="padding-bottom:20px">
+      <div class="badge">모모와 다락방의 수상한 요괴들 × 특별 이벤트</div>
+      <p class="float-em">💌</p>
+      <h2 class="page-title">편지가 바다에<br>떠 있어요</h2>
+      <p class="page-sub">링크를 전달하면 상대방이 바다 위에서<br>편지를 발견할 수 있어요.</p>
+    </div>
+    <div class="share-wrap">
+      <!-- 링크 복사 -->
+      <div class="share-link-card">
+        <div class="slinkbox" id="slink" onclick="copyLink()">
+          <span>🔗</span><span id="slink-txt">링크 생성 중…</span>
+        </div>
+        <p class="copyhint" id="copyhint">탭하면 복사돼요</p>
       </div>
-      <p class="copyhint" id="copyhint">탭하면 클립보드에 복사돼요</p>
-      <button class="evbtn" onclick="goApply()" style="margin-bottom:10px">🎟 이벤트 응모하기</button>
+      <!-- 액션 버튼들 -->
+      <div class="share-actions">
+        <button class="share-action-btn" id="kakao-btn" onclick="shareKakao()">
+          <span class="share-icon">💬</span>카카오톡
+        </button>
+        <button class="share-action-btn" onclick="shareInstagram()">
+          <span class="share-icon">📸</span>인스타그램
+        </button>
+        <button class="share-action-btn" onclick="copyLink()">
+          <span class="share-icon">🔗</span>링크 복사
+        </button>
+      </div>
+      <div class="share-divider"></div>
+      <button class="evbtn" style="width:100%;margin-bottom:10px" onclick="goApply()">🎟 이벤트 응모하기</button>
       <button class="ghostbtn" onclick="goSea()">내 편지 바다 보기</button>
     </div>
   </div>
 
-  <!-- ④ SHARED SEA : 두 편지 함께 -->
+  <!-- ④ SHARED SEA -->
   <div class="scr" id="s-shared">
     <div class="sea-canvas-box"><canvas id="sharedC"></canvas></div>
     <div class="sea-sheet">
@@ -124,16 +149,17 @@
         <p class="sub">서로의 편지가 만났습니다</p>
       </div>
       <button class="evbtn" onclick="goApply()">🎟 이벤트 응모하기</button>
-      <button class="ghostbtn" onclick="restartAll()">처음으로</button>
+      <button class="ghostbtn" onclick="goShare()">편지 전하기 →</button>
+      <button class="ghostbtn" style="font-size:11px;padding:10px" onclick="restartAll()">처음으로</button>
     </div>
   </div>
 
-  <!-- ⑤ APPLY : 이벤트 응모 폼 -->
+  <!-- ⑤ APPLY -->
   <div class="scr" id="s-apply">
     <div class="topbar" style="padding-bottom:16px">
       <div class="badge">모모와 다락방의 수상한 요괴들 × 특별 이벤트</div>
       <h1 class="page-title">이벤트 응모하기</h1>
-      <p class="page-sub">아래 정보를 입력하고<br>이벤트에 응모해 보세요!</p>
+      <p class="page-sub">편지를 바다에 띄운 기념으로<br>이벤트에 응모해 보세요!</p>
     </div>
     <div class="apply-wrap">
       <div class="apply-card">
@@ -167,17 +193,18 @@
     </div>
   </div>
 
-  <!-- ⑥ APPLY DONE -->
+  <!-- ⑥ DONE -->
   <div class="scr" id="s-apply-done">
-    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px">
-      <p style="font-size:48px;margin-bottom:16px">🎉</p>
-      <h2 class="page-title" style="margin-bottom:10px">응모 완료!</h2>
-      <p class="page-sub" style="margin-bottom:32px">당첨자 발표를 기대해 주세요.<br>편지는 계속 바다 위를 떠다니고 있어요 ✦</p>
-      <button class="evbtn" style="width:100%;max-width:320px" onclick="goSea()">내 편지 바다 보기</button>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;gap:12px">
+      <p style="font-size:52px">🎉</p>
+      <h2 class="page-title">응모 완료!</h2>
+      <p class="page-sub">당첨자 발표를 기대해 주세요.<br>편지는 계속 바다 위를 떠다니고 있어요 ✦</p>
+      <button class="evbtn" style="width:100%;max-width:320px;margin-top:8px" onclick="goSea()">내 편지 바다 보기</button>
+      <button class="ghostbtn" style="width:100%;max-width:320px" onclick="goShare()">편지 전하기 →</button>
     </div>
   </div>
 
-  <!-- 로딩 오버레이 -->
+  <!-- 로딩 -->
   <div id="loading" style="display:none">
     <div class="loading-inner">
       <span class="loading-boat">⛵</span>
