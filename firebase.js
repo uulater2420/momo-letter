@@ -1,82 +1,62 @@
-// ── firebase.js : 데이터 저장/불러오기 ──────────────────────────
+// ── firebase.js ───────────────────────────────────────────────────
 //
 // 🔧 설정 방법:
-//   1. https://console.firebase.google.com 접속
-//   2. 프로젝트 생성 → 웹 앱 추가
-//   3. 아래 firebaseConfig 값을 복사해서 붙여넣기
-//   4. Firebase 콘솔 → Firestore Database → 규칙(Rules) 탭에서 아래 규칙 적용:
+//   1. https://console.firebase.google.com 에서 프로젝트 선택
+//   2. 웹 앱 설정값을 아래 firebaseConfig에 붙여넣기
+//   3. Firestore → 규칙 탭에서 아래 규칙 적용 후 게시:
 //
-//      rules_version = '2';
-//      service cloud.firestore {
-//        match /databases/{database}/documents {
-//          match /letters/{letterId} {
-//            allow read, write: if true;
-//          }
-//        }
-//      }
-//
+//   rules_version = '2';
+//   service cloud.firestore {
+//     match /databases/{database}/documents {
+//       match /letters/{id}  { allow read, write: if true; }
+//       match /applies/{id}  { allow read, write: if true; }
+//     }
+//   }
 // ─────────────────────────────────────────────────────────────────
 
-import { initializeApp }              from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, doc, setDoc, getDoc, updateDoc }
+import { initializeApp }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-// ▼ 여기에 Firebase 콘솔에서 복사한 설정값 붙여넣기 ▼
+// ▼ Firebase 콘솔에서 복사한 설정값 붙여넣기 ▼
 const firebaseConfig = {
-    apiKey: "AIzaSyAXxYu3FxeD8v5Il0n8XRbPAzPz6fvNlsU",
-    authDomain: "momo-letter.firebaseapp.com",
-    projectId: "momo-letter",
-    storageBucket: "momo-letter.firebasestorage.app",
-    messagingSenderId: "715586990451",
-    appId: "1:715586990451:web:6779e305d4d83f5dccd506",
-    measurementId: "G-MFWK4LRLLR"
-  };
+  apiKey:            "여기에-붙여넣기",
+  authDomain:        "여기에-붙여넣기",
+  projectId:         "여기에-붙여넣기",
+  storageBucket:     "여기에-붙여넣기",
+  messagingSenderId: "여기에-붙여넣기",
+  appId:             "여기에-붙여넣기",
+};
 // ▲ ──────────────────────────────────────────────────────────── ▲
 
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
-// ID 생성 (예: "momo_abc123")
-function makeId() {
-  return 'momo_' + Math.random().toString(36).slice(2, 9);
-}
+function makeId(){ return 'momo_' + Math.random().toString(36).slice(2,9); }
 
-/**
- * 편지 저장 / 업데이트
- * @param {Object} payload - { id?, senderData, replyData, mode }
- * @returns {string} letterId
- */
-export async function saveLetter({ id, senderData, replyData, mode }) {
+/** 편지 저장 / 업데이트 */
+export async function saveLetter({ id, senderData, replyData, mode }){
   const letterId = id || makeId();
-  const ref      = doc(db, 'letters', letterId);
-
-  if (id) {
-    // 기존 문서 업데이트 (답장)
-    await updateDoc(ref, {
-      replyData:   replyData,
-      replyMode:   mode,
-      repliedAt:   Date.now(),
-    });
+  const ref = doc(db, 'letters', letterId);
+  if(id){
+    await updateDoc(ref, { replyData, replyMode: mode, repliedAt: Date.now() });
   } else {
-    // 새 문서 생성 (발신)
-    await setDoc(ref, {
-      senderData:  senderData,
-      replyData:   null,
-      mode:        mode,
-      createdAt:   Date.now(),
-    });
+    await setDoc(ref, { senderData, replyData: null, mode, createdAt: Date.now() });
   }
-
   return letterId;
 }
 
-/**
- * 편지 불러오기
- * @param {string} id
- * @returns {Object|null}
- */
-export async function loadLetter(id) {
-  const ref  = doc(db, 'letters', id);
-  const snap = await getDoc(ref);
+/** 편지 불러오기 */
+export async function loadLetter(id){
+  const snap = await getDoc(doc(db, 'letters', id));
   return snap.exists() ? snap.data() : null;
+}
+
+/** 이벤트 응모 저장 */
+export async function saveApply({ name, phone, email, letterId }){
+  await addDoc(collection(db, 'applies'), {
+    name, phone, email: email||'', letterId: letterId||'',
+    createdAt: Date.now(),
+  });
 }

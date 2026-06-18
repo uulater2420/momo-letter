@@ -6,7 +6,6 @@
   <meta name="theme-color" content="#3aa8cc" />
   <title>모모와 다락방의 수상한 요괴들 — 편지 이벤트</title>
   <link rel="stylesheet" href="style.css" />
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;500&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet" />
@@ -14,25 +13,37 @@
 <body>
 <div id="app">
 
-  <!-- ① WRITE : 발신인 편지 작성 -->
+  <!-- ① WRITE : 편지 작성 (발신인 / 수신인 공통) -->
   <div class="scr on" id="s-write">
     <div class="topbar">
       <div class="badge">모모와 다락방의 수상한 요괴들 × 특별 이벤트</div>
-      <h1 class="page-title">전하지 못한 마음을<br>바다에 띄워 보세요</h1>
-      <p class="page-sub">그리운 누군가에게 편지를 쓰거나<br>그림을 그려 바다에 보내세요.</p>
+      <h1 class="page-title" id="write-title">전하지 못한 마음을<br>바다에 띄워 보세요</h1>
+      <p class="page-sub" id="write-sub">그리운 누군가에게 편지를 쓰거나<br>그림을 그려 바다에 보내세요.</p>
     </div>
+
     <div class="card-wrap">
-      <div class="lcard">
-        <div class="chead">
-          <span class="cto">To. 그리운 당신에게</span>
-          <div class="mtabs">
-            <button class="mtab on" id="bt" onclick="sw('text')">편지</button>
-            <button class="mtab" id="bd" onclick="sw('draw')">그림</button>
-          </div>
+      <!-- 편지지 -->
+      <div class="lcard" id="lcard">
+
+        <!-- 수신인 입력 -->
+        <div class="letter-to-row">
+          <span class="to-label">To.</span>
+          <input class="to-input" id="to-input" type="text" placeholder="받는 사람 이름을 써 주세요" maxlength="20" />
         </div>
+
+        <!-- 탭 전환 -->
+        <div class="tab-bar">
+          <button class="tbtn on" id="bt" onclick="sw('text')">✏️ 편지 쓰기</button>
+          <button class="tbtn" id="bd" onclick="sw('draw')">🖌 그림 그리기</button>
+          <button class="tbtn" id="bs" onclick="sw('sticker')">✨ 꾸미기</button>
+        </div>
+
+        <!-- 편지 쓰기 탭 -->
         <div class="tab-pane on" id="tp-t">
           <textarea class="lta" id="ltxt" placeholder="보고 싶은 사람에게&#10;전하지 못했던 말들을 써 주세요…"></textarea>
         </div>
+
+        <!-- 그림 그리기 탭 -->
         <div class="tab-pane" id="tp-d">
           <canvas id="dc"></canvas>
           <div class="dtool">
@@ -41,20 +52,64 @@
             <div class="cdot" style="background:#b03830" data-c="#b03830" onclick="pc(this,'s')"></div>
             <div class="cdot" style="background:#8a5810" data-c="#8a5810" onclick="pc(this,'s')"></div>
             <div class="cdot" style="background:#3a7040" data-c="#3a7040" onclick="pc(this,'s')"></div>
-            <input type="range" class="bsr" id="bsr" min="1" max="14" value="4" step="1" />
+            <div class="cdot" style="background:#7a3a8a" data-c="#7a3a8a" onclick="pc(this,'s')"></div>
+            <input type="range" class="bsr" id="bsr" min="1" max="16" value="4" step="1" />
             <button class="clrbtn" onclick="clr('s')">지우기</button>
           </div>
         </div>
-      </div>
+
+        <!-- 꾸미기 탭 -->
+        <div class="tab-pane" id="tp-s">
+          <div class="sticker-guide">편지지에 올릴 스티커를 골라보세요</div>
+          <div class="sticker-grid" id="sticker-grid">
+            <!-- 스티커 placeholder — 추후 실제 이미지로 교체 -->
+            <button class="sticker-btn" onclick="addSticker('🌊')">🌊</button>
+            <button class="sticker-btn" onclick="addSticker('⛵')">⛵</button>
+            <button class="sticker-btn" onclick="addSticker('🐟')">🐟</button>
+            <button class="sticker-btn" onclick="addSticker('🌸')">🌸</button>
+            <button class="sticker-btn" onclick="addSticker('⭐')">⭐</button>
+            <button class="sticker-btn" onclick="addSticker('🍃')">🍃</button>
+            <button class="sticker-btn" onclick="addSticker('🦋')">🦋</button>
+            <button class="sticker-btn" onclick="addSticker('🌙')">🌙</button>
+            <button class="sticker-btn" onclick="addSticker('💫')">💫</button>
+            <button class="sticker-btn" onclick="addSticker('🌺')">🌺</button>
+            <button class="sticker-btn" onclick="addSticker('🍀')">🍀</button>
+            <button class="sticker-btn" onclick="addSticker('✨')">✨</button>
+          </div>
+          <!-- 스티커 붙은 편지 미리보기 -->
+          <div class="sticker-preview-label">편지지 미리보기</div>
+          <div class="sticker-preview" id="sticker-preview">
+            <div class="sp-lines"></div>
+            <div id="sticker-layer"></div>
+          </div>
+          <button class="clrbtn" style="margin:8px 16px" onclick="clearStickers()">스티커 모두 지우기</button>
+        </div>
+
+        <!-- 보내는 이 서명 -->
+        <div class="letter-from-row">
+          <span class="from-label">From.</span>
+          <input class="from-input" id="from-input" type="text" placeholder="보내는 사람 이름" maxlength="20" />
+        </div>
+
+      </div><!-- /lcard -->
+
       <div class="bot-area">
-        <button class="sendbtn" onclick="doSend()">
-          <span class="rk">⛵</span> 바다에 띄우기
+        <button class="sendbtn" id="send-main-btn" onclick="doSend()">
+          <span class="rk">⛵</span>
+          <span id="send-btn-label">바다에 띄우기</span>
         </button>
       </div>
     </div>
   </div>
 
-  <!-- ② SEA : 편지 바다 애니메이션 -->
+  <!-- ② ANIM : 편지 접기 + 배 애니메이션 -->
+  <div class="scr" id="s-anim">
+    <div class="sea-canvas-box">
+      <canvas id="animC"></canvas>
+    </div>
+  </div>
+
+  <!-- ③ SEA : 편지 바다 (발신 후) -->
   <div class="scr" id="s-sea">
     <div class="sea-canvas-box">
       <canvas id="seaC"></canvas>
@@ -69,59 +124,19 @@
     </div>
   </div>
 
-  <!-- ③ SHARE : 링크 공유 -->
+  <!-- ④ SHARE : 링크 공유 -->
   <div class="scr" id="s-share">
     <p class="float-em">💌</p>
     <div class="share-card">
       <h2 class="sh-title">편지가 바다에<br>떠 있어요</h2>
-      <p class="sh-sub">링크를 전달하면 상대방이 바다 위에서<br>당신의 편지를 발견할 수 있어요.</p>
+      <p class="sh-sub">아래 링크를 전달하면 상대방이<br>바다 위에서 편지를 발견할 수 있어요.</p>
       <div class="slinkbox" id="slink" onclick="copyLink()">
         <span>🔗</span>
         <span id="slink-txt">링크 생성 중…</span>
       </div>
       <p class="copyhint" id="copyhint">탭하면 클립보드에 복사돼요</p>
-      <button class="evbtn" onclick="goSea()" style="margin-bottom:10px">내 편지 바다 보기</button>
-    </div>
-  </div>
-
-  <!-- ④ REPLY : 수신인 답장 작성 -->
-  <div class="scr" id="s-reply">
-    <div class="topbar">
-      <div class="badge">모모와 다락방의 수상한 요괴들 × 특별 이벤트</div>
-      <div class="reply-badge">✦ 답장 모드</div>
-      <h1 class="page-title">당신의 마음도<br>바다에 띄워 보세요</h1>
-      <p class="page-sub">답장을 보내면 두 마음이<br>같은 바다 위에서 만납니다.</p>
-    </div>
-    <div class="card-wrap">
-      <div class="lcard">
-        <div class="chead">
-          <span class="cto" style="color:#a87020">Re. 마음을 받았습니다</span>
-          <div class="mtabs">
-            <button class="mtab on" id="rbt" onclick="sw('text','r')">편지</button>
-            <button class="mtab" id="rbd" onclick="sw('draw','r')">그림</button>
-          </div>
-        </div>
-        <div class="tab-pane on" id="rtp-t">
-          <textarea class="lta" id="rtxt" placeholder="받은 마음에 답장을 써 보세요…"></textarea>
-        </div>
-        <div class="tab-pane" id="rtp-d">
-          <canvas id="rdc"></canvas>
-          <div class="dtool">
-            <div class="cdot on" style="background:#1c2e26" data-c="#1c2e26" onclick="pc(this,'r')"></div>
-            <div class="cdot" style="background:#2a5fa8" data-c="#2a5fa8" onclick="pc(this,'r')"></div>
-            <div class="cdot" style="background:#b03830" data-c="#b03830" onclick="pc(this,'r')"></div>
-            <div class="cdot" style="background:#8a5810" data-c="#8a5810" onclick="pc(this,'r')"></div>
-            <div class="cdot" style="background:#3a7040" data-c="#3a7040" onclick="pc(this,'r')"></div>
-            <input type="range" class="bsr" id="rbsr" min="1" max="14" value="4" step="1" />
-            <button class="clrbtn" onclick="clr('r')">지우기</button>
-          </div>
-        </div>
-      </div>
-      <div class="bot-area">
-        <button class="sendbtn" style="background:#a87020;box-shadow:0 4px 16px rgba(168,112,32,0.28)" onclick="doReply()">
-          💛 답장 띄우기
-        </button>
-      </div>
+      <button class="evbtn" onclick="goApply()" style="margin-bottom:10px">🎟 이벤트 응모하기</button>
+      <button class="ghostbtn" onclick="goSea()">내 편지 바다 보기</button>
     </div>
   </div>
 
@@ -135,8 +150,65 @@
         <p>두 마음이 같은 바다 위에 있어요 ✦</p>
         <p class="sub">서로의 편지가 만났습니다</p>
       </div>
-      <button class="evbtn" id="event-btn">🎟 이벤트 함께 참여하기</button>
+      <button class="evbtn" onclick="goApply()">🎟 이벤트 응모하기</button>
       <button class="ghostbtn" onclick="restartAll()">처음으로</button>
+    </div>
+  </div>
+
+  <!-- ⑥ APPLY : 이벤트 응모 폼 -->
+  <div class="scr" id="s-apply">
+    <div class="topbar" style="padding-bottom:16px">
+      <div class="badge">모모와 다락방의 수상한 요괴들 × 특별 이벤트</div>
+      <h1 class="page-title">이벤트 응모하기</h1>
+      <p class="page-sub">아래 정보를 입력하고<br>이벤트에 응모해 보세요!</p>
+    </div>
+    <div class="apply-wrap">
+      <div class="apply-card">
+
+        <div class="afield">
+          <label class="alabel">이름 <span class="req">*</span></label>
+          <input class="ainput" id="a-name" type="text" placeholder="이름을 입력해 주세요" maxlength="20" />
+        </div>
+
+        <div class="afield">
+          <label class="alabel">연락처 <span class="req">*</span></label>
+          <input class="ainput" id="a-phone" type="tel" placeholder="010-0000-0000" maxlength="13" />
+        </div>
+
+        <div class="afield">
+          <label class="alabel">이메일</label>
+          <input class="ainput" id="a-email" type="email" placeholder="example@email.com" />
+        </div>
+
+        <div class="agree-row">
+          <label class="agree-label">
+            <input type="checkbox" id="a-agree" class="agree-check" />
+            <span class="agree-txt">
+              개인정보 수집 및 이용에 동의합니다 <span class="req">*</span>
+            </span>
+          </label>
+          <button class="agree-detail-btn" onclick="toggleAgreeDetail()">내용 보기 ▾</button>
+        </div>
+        <div class="agree-detail" id="agree-detail" style="display:none">
+          수집 항목: 이름, 연락처, 이메일<br>
+          수집 목적: 이벤트 당첨자 선정 및 경품 발송<br>
+          보유 기간: 이벤트 종료 후 30일
+        </div>
+
+        <p class="apply-err" id="apply-err"></p>
+
+        <button class="sendbtn" style="margin-top:8px" onclick="doApply()">응모 완료</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑦ APPLY DONE -->
+  <div class="scr" id="s-apply-done">
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px">
+      <p style="font-size:48px;margin-bottom:16px">🎉</p>
+      <h2 class="page-title" style="margin-bottom:10px">응모 완료!</h2>
+      <p class="page-sub" style="margin-bottom:32px">당첨자 발표를 기대해 주세요.<br>편지는 계속 바다 위를 떠다니고 있어요 ✦</p>
+      <button class="evbtn" style="width:100%;max-width:320px" onclick="goSea()">내 편지 바다 보기</button>
     </div>
   </div>
 
@@ -144,15 +216,13 @@
   <div id="loading" style="display:none">
     <div class="loading-inner">
       <span class="loading-boat">⛵</span>
-      <p>편지를 바다에 띄우는 중…</p>
+      <p id="loading-msg">편지를 바다에 띄우는 중…</p>
     </div>
   </div>
 
 </div>
 
-<!-- Firebase SDK -->
 <script type="module" src="firebase.js"></script>
-<!-- 앱 로직 -->
 <script type="module" src="app.js"></script>
 </body>
 </html>
