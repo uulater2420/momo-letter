@@ -55,7 +55,8 @@ window.sw = function(m){
   document.getElementById({text:'bt',draw:'bd',sticker:'bs',mixed:'bm'}[m])?.classList.add('on');
   ['tp-t','tp-d','tp-s','tp-m'].forEach(id => document.getElementById(id).className = 'tab-pane');
   document.getElementById({text:'tp-t',draw:'tp-d',sticker:'tp-s',mixed:'tp-m'}[m]).className = 'tab-pane on';
-  if(m === 'draw' || m === 'mixed') initDC();
+  // draw와 mixed 탭은 같은 dc canvas 사용 — 그림 그리기 초기화
+  if(m === 'draw') initDC();
   if(m === 'sticker'){ initPreviewCanvas(); drawPreview(); }
 };
 
@@ -179,11 +180,12 @@ function capture(){
     ctx.strokeStyle='rgba(220,120,100,0.20)'; ctx.lineWidth=0.5;
     ctx.beginPath();ctx.moveTo(0,22);ctx.lineTo(OW,22);ctx.stroke();
 
-    // 텍스트 레이어
-    const txtEl = S.mode==='mixed'
-      ? document.getElementById('mtxt')
-      : document.getElementById('ltxt');
-    const txt = txtEl?.value || '';
+    // 텍스트 레이어 — 텍스트 탭이나 혼합 탭 모두 ltxt 우선, 없으면 mtxt
+    const txtEl = document.getElementById('ltxt') || document.getElementById('mtxt');
+    const txt = (S.mode === 'mixed'
+      ? (document.getElementById('mtxt')?.value || document.getElementById('ltxt')?.value || '')
+      : (document.getElementById('ltxt')?.value || '')
+    );
     if(txt){
       const maxW=OW-48, areaH=OH-56;
       const wrapL=sz=>{ ctx.font=`300 ${sz}px "Gaegu",cursive`; const ls=[]; txt.split('\n').forEach(p=>{let l='';for(const ch of p){const t=l+ch;if(ctx.measureText(t).width>maxW&&l){ls.push(l);l=ch;}else l=t;}ls.push(l);}); return ls; };
@@ -361,13 +363,21 @@ function startSea(canvasId, items, fadeIn=false){
 // ── 발신인 보내기 ─────────────────────────────────────────────────
 window.doSend = async function(){
   if(S.isReply){ await doReplySend(); return; }
-  const txt = (document.getElementById('ltxt')?.value || document.getElementById('mtxt')?.value || '').trim();
-  if(S.mode==='text'&&!txt){
-    const ta=document.getElementById('ltxt');
-    ta.style.outline='2px solid rgba(192,88,72,0.5)'; ta.focus();
-    setTimeout(()=>ta.style.outline='',1500); return;
+
+  const ltxt = document.getElementById('ltxt')?.value?.trim() || '';
+  const mtxt = document.getElementById('mtxt')?.value?.trim() || '';
+  const txt = ltxt || mtxt;
+
+  // 유효성 검사
+  if(S.mode === 'text' && !txt){
+    const ta = document.getElementById('ltxt');
+    ta.style.outline = '2px solid rgba(192,88,72,0.5)';
+    ta.focus();
+    setTimeout(()=>ta.style.outline='', 1500);
+    return;
   }
-  if(S.mode==='draw'&&!S.drawn) return;
+  if(S.mode === 'draw' && !S.drawn) return;
+  if(S.mode === 'mixed' && !txt && !S.drawn) return;
 
   S.savedText = txt;
   S.savedTo   = document.getElementById('to-input')?.value || '';
