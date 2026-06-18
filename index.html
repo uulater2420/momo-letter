@@ -15,6 +15,13 @@
 
   <!-- ① WRITE -->
   <div class="scr on" id="s-write">
+    <!-- 배경 장식: 세토내해 섬 실루엣 -->
+    <div class="sea-deco" aria-hidden="true">
+      <svg viewBox="0 0 390 120" xmlns="http://www.w3.org/2000/svg" style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:390px;opacity:0.18;pointer-events:none;z-index:1">
+        <path d="M0,80 Q30,60 70,65 Q110,70 140,58 Q170,46 210,52 Q250,58 280,48 Q310,38 340,44 Q365,50 390,42 L390,120 L0,120 Z" fill="#1a5a70"/>
+        <path d="M0,95 Q40,78 80,82 Q120,86 160,76 Q200,66 240,72 Q280,78 320,68 Q355,60 390,65 L390,120 L0,120 Z" fill="#2a7a9e"/>
+      </svg>
+    </div>
     <div class="topbar">
       <div class="badge">모모와 다락방의 수상한 요괴들 × 특별 이벤트</div>
       <h1 class="page-title" id="write-title">전하지 못한 마음을<br>바다에 띄워 보세요</h1>
@@ -114,21 +121,22 @@
 
   <!-- ③ SHARE (PC 폴백용) -->
   <div class="scr" id="s-share">
-    <div class="topbar" style="padding-bottom:20px">
+    <div class="topbar" style="padding-bottom:18px">
       <div class="badge">모모와 다락방의 수상한 요괴들 × 특별 이벤트</div>
-      <p class="float-em">💌</p>
+      <p class="float-em" style="margin-top:8px">💌</p>
       <h2 class="page-title">편지가 바다에<br>떠 있어요</h2>
-      <p class="page-sub">링크를 복사해서 전달하면<br>상대방이 바다 위에서 편지를 발견할 수 있어요.</p>
+      <p class="page-sub">링크를 전달하면 상대방이<br>바다 위에서 편지를 발견할 수 있어요.</p>
     </div>
     <div class="share-wrap">
       <div class="share-link-card">
+        <p style="font-size:11px;color:var(--text-muted);font-family:'Noto Serif KR',serif;margin-bottom:8px">✦ 공유 링크</p>
         <div class="slinkbox" id="slink" onclick="copyLink()">
           <span>🔗</span><span id="slink-txt">링크 생성 중…</span>
         </div>
         <p class="copyhint" id="copyhint">탭하면 복사돼요</p>
       </div>
-      <button class="evbtn" onclick="goShare()" style="margin-bottom:6px">↗ 공유하기</button>
-      <button class="evbtn" style="margin-bottom:10px" onclick="goApply()">🎟 이벤트 응모하기</button>
+      <button class="evbtn" onclick="goShare()" style="margin-bottom:4px">↗ 공유하기</button>
+      <button class="evbtn" style="background:linear-gradient(135deg,#c87858,#a85838)" onclick="goApply()">🎟 이벤트 응모하기</button>
       <button class="ghostbtn" onclick="goSea()">내 편지 바다 보기</button>
     </div>
   </div>
