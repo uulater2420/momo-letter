@@ -375,8 +375,14 @@ window.doSend = async function(){
 
   showLoading(true,'편지를 봉투에 담는 중…');
   S.senderImg = await capture();
-  try{ S.letterId = await saveLetter({senderData:S.senderImg.src,replyData:null,mode:S.mode}); }
-  catch(e){ console.error('저장 실패:',e); }
+
+  // Firebase 저장 — 실패해도 3초 후 무조건 진행
+  try{
+    const savePromise = saveLetter({senderData:S.senderImg.src,replyData:null,mode:S.mode});
+    const timeoutPromise = new Promise(r => setTimeout(r, 3000));
+    S.letterId = await Promise.race([savePromise, timeoutPromise]);
+  } catch(e){ console.warn('저장 실패, 계속 진행:', e); }
+
   S.shareUrl = `${location.origin}${location.pathname}?id=${S.letterId||'preview'}`;
   showLoading(false);
 
@@ -517,8 +523,10 @@ async function doReplySend(){
   showLoading(true,'답장을 봉투에 담는 중…');
   S.replyImg = await capture();
   if(S.letterId){
-    try{ await saveLetter({id:S.letterId,senderData:S.senderImg?.src||null,replyData:S.replyImg.src,mode:S.mode}); }
-    catch(e){ console.error('답장 저장 실패:',e); }
+    try{
+      const savePromise = saveLetter({id:S.letterId,senderData:S.senderImg?.src||null,replyData:S.replyImg.src,mode:S.mode});
+      await Promise.race([savePromise, new Promise(r=>setTimeout(r,3000))]);
+    } catch(e){ console.warn('답장 저장 실패, 계속 진행:', e); }
   }
   showLoading(false);
   launchSharedSea();
@@ -537,8 +545,10 @@ window.doApply = async function(){
   if(!agree){err.textContent='개인정보 수집에 동의해 주세요.';return;}
   err.textContent='';
   showLoading(true,'응모 정보를 저장하는 중…');
-  try{ await saveApply({name,phone,email,letterId:S.letterId||null}); }
-  catch(e){ console.error('응모 저장 실패:',e); }
+  try{
+    const savePromise = saveApply({name,phone,email,letterId:S.letterId||null});
+    await Promise.race([savePromise, new Promise(r=>setTimeout(r,3000))]);
+  } catch(e){ console.warn('응모 저장 실패:', e); }
   showLoading(false);
   show('s-apply-done');
 };
