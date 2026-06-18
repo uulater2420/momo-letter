@@ -106,36 +106,23 @@
     </div>
   </div>
 
-  <!-- ③ SHARE -->
+  <!-- ③ SHARE (PC 폴백용) -->
   <div class="scr" id="s-share">
     <div class="topbar" style="padding-bottom:20px">
       <div class="badge">모모와 다락방의 수상한 요괴들 × 특별 이벤트</div>
       <p class="float-em">💌</p>
       <h2 class="page-title">편지가 바다에<br>떠 있어요</h2>
-      <p class="page-sub">링크를 전달하면 상대방이 바다 위에서<br>편지를 발견할 수 있어요.</p>
+      <p class="page-sub">링크를 복사해서 전달하면<br>상대방이 바다 위에서 편지를 발견할 수 있어요.</p>
     </div>
     <div class="share-wrap">
-      <!-- 링크 복사 -->
       <div class="share-link-card">
         <div class="slinkbox" id="slink" onclick="copyLink()">
           <span>🔗</span><span id="slink-txt">링크 생성 중…</span>
         </div>
         <p class="copyhint" id="copyhint">탭하면 복사돼요</p>
       </div>
-      <!-- 액션 버튼들 -->
-      <div class="share-actions">
-        <button class="share-action-btn" id="kakao-btn" onclick="shareKakao()">
-          <span class="share-icon">💬</span>카카오톡
-        </button>
-        <button class="share-action-btn" onclick="shareInstagram()">
-          <span class="share-icon">📸</span>인스타그램
-        </button>
-        <button class="share-action-btn" onclick="copyLink()">
-          <span class="share-icon">🔗</span>링크 복사
-        </button>
-      </div>
-      <div class="share-divider"></div>
-      <button class="evbtn" style="width:100%;margin-bottom:10px" onclick="goApply()">🎟 이벤트 응모하기</button>
+      <button class="evbtn" onclick="goShare()" style="margin-bottom:6px">↗ 공유하기</button>
+      <button class="evbtn" style="margin-bottom:10px" onclick="goApply()">🎟 이벤트 응모하기</button>
       <button class="ghostbtn" onclick="goSea()">내 편지 바다 보기</button>
     </div>
   </div>
@@ -189,18 +176,20 @@
         </div>
         <p class="apply-err" id="apply-err"></p>
         <button class="sendbtn" style="margin-top:8px" onclick="doApply()">응모 완료</button>
+        <button class="ghostbtn" style="margin-top:8px;background:rgba(255,255,255,0.12);border:1px solid rgba(90,160,200,0.3);color:#2a5f80" onclick="goSea()">← 편지 바다로 돌아가기</button>
       </div>
     </div>
   </div>
 
   <!-- ⑥ DONE -->
   <div class="scr" id="s-apply-done">
-    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;gap:12px">
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;gap:10px">
       <p style="font-size:52px">🎉</p>
       <h2 class="page-title">응모 완료!</h2>
       <p class="page-sub">당첨자 발표를 기대해 주세요.<br>편지는 계속 바다 위를 떠다니고 있어요 ✦</p>
       <button class="evbtn" style="width:100%;max-width:320px;margin-top:8px" onclick="goSea()">내 편지 바다 보기</button>
-      <button class="ghostbtn" style="width:100%;max-width:320px" onclick="goShare()">편지 전하기 →</button>
+      <button class="evbtn" style="width:100%;max-width:320px;background:#a87020;box-shadow:0 4px 14px rgba(168,112,32,0.28)" onclick="goShare()">편지 전하기 →</button>
+      <button class="ghostbtn" style="width:100%;max-width:320px" onclick="restartAll()">✉️ 편지 한 통 더 쓰기</button>
     </div>
   </div>
 

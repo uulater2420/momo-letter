@@ -104,10 +104,10 @@ function drawPreview(){
   ctx.strokeStyle='rgba(90,160,200,0.15)';ctx.lineWidth=0.5;
   ctx.beginPath();ctx.moveTo(0,18);ctx.lineTo(W,18);ctx.stroke();
 
-  // 내용: 그림 모드면 dc 캔버스를, 텍스트면 글씨 렌더
-  if(S.mode==='draw'||S.drawn){
+  // 내용: drawn이 있으면 그림 우선, 없으면 텍스트
+  if(S.drawn){
     const dc=document.getElementById('dc');
-    if(S.drawn&&dc) ctx.drawImage(dc,0,18,W,H-30);
+    if(dc) ctx.drawImage(dc,0,18,W,H-30);
   } else {
     const txt=document.getElementById('ltxt').value||'';
     const maxW=W-36;
@@ -209,8 +209,8 @@ function capture(){
     ctx.strokeStyle='rgba(90,160,200,0.18)';ctx.lineWidth=0.5;
     ctx.beginPath();ctx.moveTo(0,22);ctx.lineTo(OW,22);ctx.stroke();
 
-    if(S.mode==='draw'&&S.drawn){
-      // 그림: 편지지 위에 오버레이
+    if(S.drawn){
+      // 그림: 편지지 위에 오버레이 (mode가 sticker로 바뀌어도 drawn이면 그림 우선)
       const dc=document.getElementById('dc');
       ctx.drawImage(dc,0,22,OW,OH-36);
     } else {
@@ -347,11 +347,29 @@ window.doSend=async function(){
 };
 
 // ── 공유 ─────────────────────────────────────────────────────────
-window.goShare=function(){
-  document.getElementById('slink-txt').textContent=S.shareUrl||location.href;
-  document.getElementById('slink').dataset.url=S.shareUrl||location.href;
+window.goShare=async function(){
+  const url=S.shareUrl||location.href;
+
+  // Web Share API: 모바일에서 카카오/인스타/문자 등 앱 선택창 바로 표시
+  if(navigator.share){
+    try{
+      await navigator.share({
+        title:'모모와 다락방의 수상한 요괴들 — 편지 이벤트',
+        text:'바다 위에 떠다니는 편지가 도착했어요. 열어보세요 ✦',
+        url,
+      });
+      return; // 공유 성공 시 링크 화면 안 띄워도 됨
+    }catch(e){
+      if(e.name==='AbortError') return; // 사용자가 취소한 경우
+    }
+  }
+
+  // 폴백: Web Share 미지원 환경 (PC 등) → 링크 복사 화면
+  document.getElementById('slink-txt').textContent=url;
+  document.getElementById('slink').dataset.url=url;
   show('s-share');
 };
+
 window.copyLink=function(){
   const url=document.getElementById('slink')?.dataset.url||S.shareUrl||location.href;
   if(navigator.clipboard) navigator.clipboard.writeText(url).then(()=>{
@@ -359,15 +377,8 @@ window.copyLink=function(){
     setTimeout(()=>document.getElementById('copyhint').textContent='탭하면 복사돼요',2000);
   });
 };
-window.shareKakao=function(){
-  // 카카오 SDK 미연동 시 링크 복사로 대체
-  copyLink();
-  alert('링크가 복사되었어요!\n카카오톡에 붙여넣기 해주세요 💬');
-};
-window.shareInstagram=function(){
-  copyLink();
-  alert('링크가 복사되었어요!\n인스타그램 스토리에 붙여넣기 해주세요 📸');
-};
+window.shareKakao=function(){ window.goShare(); };
+window.shareInstagram=function(){ window.goShare(); };
 window.goSea=function(){ show('s-sea'); };
 
 // ── 수신인 답장 ───────────────────────────────────────────────────
