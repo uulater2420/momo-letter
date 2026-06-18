@@ -3,7 +3,7 @@
    디자인 컨셉: 세토내해 수채화 + 복숭아빛 여름 + 손그림 감성
    ═══════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;500&family=Noto+Sans+KR:wght@300;400;500&family=Gaegu:wght@300;400;700&family=Shippori+Mincho:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;500&family=Noto+Sans+KR:wght@300;400;500;700&family=Gaegu:wght@300;400;700&display=swap');
 
 :root {
   /* ── 복숭아 팔레트 (모모의 색) ── */
@@ -98,14 +98,14 @@ html, body {
   border-radius: 20px; padding: 4px 14px;
   font-size: 10px; letter-spacing: .06em;
   color: var(--peach-mid);
-  font-family: 'Noto Serif KR', serif;
+  font-family: 'Noto Sans KR', sans-serif;
 }
 .badge::before { content: '🍑'; font-size: 10px; }
 
 /* 타이틀 */
 .page-title {
-  font-family: 'Shippori Mincho', 'Noto Serif KR', serif;
-  font-size: 22px; font-weight: 500;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 21px; font-weight: 700;
   color: var(--text-dark); text-align: center; line-height: 1.6;
 }
 
@@ -165,7 +165,7 @@ html, body {
   position: relative; z-index: 2;
 }
 .to-label {
-  font-family: 'Shippori Mincho', serif;
+  font-family: 'Noto Sans KR', sans-serif;
   font-size: 13px; color: var(--peach-mid); white-space: nowrap;
   font-weight: 500;
 }
@@ -294,7 +294,7 @@ html, body {
   position: relative; z-index: 2;
 }
 .from-label {
-  font-family: 'Shippori Mincho', serif;
+  font-family: 'Noto Sans KR', sans-serif;
   font-size: 12px; color: var(--peach-mid); white-space: nowrap;
   font-weight: 500;
 }
@@ -314,7 +314,7 @@ html, body {
   background: var(--peach-mid);
   color: #fff; border: none; border-radius: 40px;
   padding: 15px; font-size: 15px;
-  font-family: 'Shippori Mincho', 'Noto Serif KR', serif;
+  font-family: 'Noto Sans KR', sans-serif;
   cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
   box-shadow:
     0 4px 0 var(--peach-deep),
@@ -355,7 +355,7 @@ html, body {
   backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
 }
 .sea-pill p {
-  font-family: 'Shippori Mincho', 'Noto Serif KR', serif;
+  font-family: 'Noto Sans KR', sans-serif;
   font-size: 13px; color: var(--text-dark); line-height: 1.9;
 }
 .sea-pill .sub { font-size: 11px; color: var(--text-muted); }
@@ -363,7 +363,7 @@ html, body {
 /* 복숭아 버튼 */
 .evbtn {
   width: 100%; border: none; border-radius: 40px; padding: 14px;
-  font-size: 13px; font-family: 'Shippori Mincho', 'Noto Serif KR', serif;
+  font-size: 13px; font-family: 'Noto Sans KR', sans-serif;
   cursor: pointer; letter-spacing: 0.04em; transition: transform .15s;
   background: var(--peach-mid); color: #fff;
   box-shadow: 0 3px 0 var(--peach-deep), 0 5px 14px rgba(192,88,72,0.25);
@@ -373,7 +373,7 @@ html, body {
 /* 고스트 버튼 */
 .ghostbtn {
   width: 100%; border-radius: 40px; padding: 12px;
-  font-size: 12px; font-family: 'Noto Serif KR', serif;
+  font-size: 12px; font-family: 'Noto Sans KR', sans-serif;
   cursor: pointer; transition: all .18s;
   background: rgba(255,255,255,0.12);
   border: 1px solid rgba(255,255,255,0.36);
@@ -423,7 +423,7 @@ html, body {
 }
 .afield { display: flex; flex-direction: column; gap: 6px; }
 .alabel {
-  font-family: 'Shippori Mincho', 'Noto Serif KR', serif;
+  font-family: 'Noto Sans KR', sans-serif;
   font-size: 13px; color: var(--text-dark); font-weight: 400;
 }
 .req { color: var(--peach-mid); }
@@ -461,7 +461,7 @@ html, body {
 .loading-inner { text-align: center; }
 .loading-boat { font-size: 48px; display: block; animation: floatY 1.2s ease-in-out infinite; margin-bottom: 16px; }
 .loading-inner p {
-  font-family: 'Shippori Mincho', 'Noto Serif KR', serif;
+  font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px; color: rgba(255,255,255,0.88); letter-spacing: 0.08em;
 }
 
@@ -474,6 +474,50 @@ html, body {
   border: 1px solid rgba(224,120,104,0.35);
   border-radius: 20px; padding: 4px 14px;
   font-size: 10px; color: var(--peach-mid);
-  font-family: 'Noto Serif KR', serif;
+  font-family: 'Noto Sans KR', sans-serif;
   align-self: center;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   모바일 반응형 보정
+   ═══════════════════════════════════════════════════════════ */
+
+/* 화면 짧은 기기 (SE, 갤럭시 폴드 등) */
+@media (max-height: 680px) {
+  .topbar { padding-top: 28px; gap: 6px; }
+  .page-title { font-size: 18px; }
+  .page-sub { font-size: 11px; line-height: 1.6; }
+  .card-wrap { margin-top: 14px; }
+  .lta { min-height: 36vw; font-size: 16px; line-height: 30px; }
+  .bot-area { padding: 10px 14px 24px; }
+  .sendbtn { padding: 13px; font-size: 14px; }
+  .sea-sheet { padding: 44px 14px 28px; }
+}
+
+/* 화면 아주 짧은 기기 */
+@media (max-height: 580px) {
+  .topbar { padding-top: 20px; }
+  .page-title { font-size: 16px; }
+  .badge { font-size: 9px; padding: 3px 11px; }
+}
+
+/* app-bg SVG 항상 전체 영역 커버 */
+#app-bg {
+  position: fixed; inset: 0;
+  max-width: 390px; left: 50%; transform: translateX(-50%);
+  z-index: 0; pointer-events: none;
+  width: 100%; height: 100%;
+  overflow: hidden;
+}
+#app-bg svg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  min-height: 100vh;
+}
+
+/* 응모 완료 화면 SVG 일러스트 모바일 크기 보정 */
+#s-apply-done svg {
+  max-width: 160px;
+  width: 44vw;
+  height: auto;
 }

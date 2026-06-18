@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;500&family=Noto+Sans+KR:wght@300;400;500&family=Gaegu:wght@300;400;700&family=Shippori+Mincho:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;500&family=Noto+Sans+KR:wght@300;400;500&family=Gaegu:wght@300;400;700&display=swap" rel="stylesheet" />
 </head>
 <body>
 <div id="app">
@@ -16,7 +16,8 @@
 <!-- ═══ 수채화 배경 레이어 (모든 화면 공통) ═══ -->
 <div id="app-bg" aria-hidden="true">
   <svg viewBox="0 0 390 844" xmlns="http://www.w3.org/2000/svg"
-       style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+       preserveAspectRatio="xMidYMid slice"
+       style="position:absolute;inset:0;width:100%;height:100%;display:block">
     <defs>
       <!-- 수채화 번짐 필터 -->
       <filter id="wc" x="-20%" y="-20%" width="140%" height="140%">
@@ -242,7 +243,7 @@
     </div>
     <div class="share-wrap">
       <div class="share-link-card">
-        <p style="font-size:11px;color:var(--text-muted);font-family:'Shippori Mincho',serif;margin-bottom:8px;letter-spacing:.04em">✦ 공유 링크</p>
+        <p style="font-size:11px;color:var(--text-muted);font-family:'Noto Sans KR',sans-serif;font-weight:500;margin-bottom:8px;letter-spacing:.04em">✦ 공유 링크</p>
         <div class="slinkbox" id="slink" onclick="copyLink()">
           <span>🔗</span><span id="slink-txt">링크 생성 중…</span>
         </div>
