@@ -1,5 +1,5 @@
 // ── app.js ────────────────────────────────────────────────────────
-import { createConversation, addLetter, loadConversation, watchConversation, saveApply } from './firebase.js';
+import { saveLetter, loadLetter, saveApply, watchLetter } from './firebase.js';
 
 // ══════════════════════════════════════════════════════════════════
 // 상태
@@ -17,8 +17,6 @@ const S = {
   senderImg: null, replyImg: null,
   letterId: null, shareUrl: '',
   isReply: false,
-  convId: null,            // 대화 ID (?c=)
-  latestLetters: [],       // 현재 대화의 편지 목록(최신)
   savedText: '', savedTo: '', savedFrom: '',
   seaRaf: null, watchUnsub: null,
   // 통합 캔버스
@@ -425,191 +423,154 @@ function showYokaiDance(onDone) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// 대화형 바다 — 편지들이 같은 바다에 쌓이고 실시간 공유
-// ══════════════════════════════════════════════════════════════════
-const _imgCache = {};
-let _seaCount = -1;
-
-function stopSea(){ if(S.seaRaf){cancelAnimationFrame(S.seaRaf);S.seaRaf=null;} }
-
-// src(dataURL) → Image (캐시)
-function loadImg(src){
-  return new Promise(res=>{
-    if(_imgCache[src]) return res(_imgCache[src]);
-    const im=new Image();
-    im.onload=()=>{_imgCache[src]=im;res(im);};
-    im.onerror=()=>res(null);
-    im.src=src;
-  });
-}
-
-// 편지 N통을 바다에 흩뿌릴 위치/속도 계산 (편지가 많을수록 작게)
-function frac(x){ return x - Math.floor(x); }
-function layoutLetters(imgs){
-  const n=imgs.length;
-  const base = n<=2?0.60 : n<=4?0.50 : n<=6?0.42 : 0.36;
-  return imgs.map((img,i)=>{
-    const r =frac(Math.sin((i+1)*97.13)*1000);
-    const r2=frac(Math.sin((i+1)*43.77)*1000);
-    const col=i%3, row=Math.floor(i/3);
-    let x=0.05+col*0.21+r*0.06;
-    let y=0.09+row*0.15+r2*0.05;
-    x=Math.min(Math.max(x,0.04),0.64);
-    y=Math.min(Math.max(y,0.06),0.55);
-    return {
-      img, x, y,
-      vx:0.12+r*0.10, vy:-0.035-r2*0.04,
-      a:(i%2?1:-1)*(0.03+r*0.035),
-      va:(i%2?1:-1)*0.00013,
-      sw:base + (r-0.5)*0.04,
-      ph:i*0.7,
-    };
-  });
-}
-
-// 현재 대화의 편지들을 바다에 그림 (s-sea 가 보일 때만)
-function paintConvSea(letters){
-  S.latestLetters = letters || [];
-  if(!$('s-sea')?.classList.contains('on')) return;
-  const srcs=S.latestLetters.map(l=>l.img).filter(Boolean);
-  if(!srcs.length){ _seaCount=0; return; }
-  Promise.all(srcs.map(loadImg)).then(list=>{
-    const imgs=list.filter(Boolean);
-    if(!imgs.length) return;
-    if(imgs.length===_seaCount) return; // 변화 없으면 그대로 유지
-    _seaCount=imgs.length;
-    startSea('sea-canvas', layoutLetters(imgs), true);
-    const sub=$('sea-sub');
-    if(sub) sub.textContent = imgs.length<=1
-      ? '🔗 링크를 공유하면 상대도 여기서 답장할 수 있어요'
-      : `지금까지 편지 ${imgs.length}통이 같은 바다에 떠 있어요`;
-  });
-}
-
-// 대화 실시간 감시 시작
-function startConvWatch(){
-  if(S.watchUnsub){S.watchUnsub();S.watchUnsub=null;}
-  if(!S.convId) return;
-  _seaCount=-1;
-  S.watchUnsub=watchConversation(S.convId, letters=>paintConvSea(letters));
-}
-
-// 공유 바다 버튼 구성
-function setupConvSeaButtons(){
-  const msg=$('sea-msg'); if(msg) msg.textContent='편지들이 같은 바다에 모이고 있어요 ✦';
-  const r=$('reply-btn'); if(r){ r.textContent='✏️ 편지 쓰기'; r.style.display='block'; }
-  const s=$('share-btn'); if(s){ s.textContent='🔗 함께 볼 링크 공유'; s.style.display='block'; }
-  const a=$('apply-btn'); if(a){ a.textContent='🎟 이벤트 응모하기'; a.style.display='block'; }
-  const n=$('new-btn'); if(n) n.style.display='none';
-  const e=$('edit-btn'); if(e) e.style.display='none';
-}
-
-// 공유 바다 열기 (전환 연출 포함)
-function openConvSea(){
-  inkTransition('radial-gradient(circle, rgba(100,180,200,0.92) 0%, rgba(30,90,120,0.95) 100%)',()=>{
-    show('s-sea');
-    setupConvSeaButtons();
-    startConvWatch();           // 부착 즉시 현재 편지들이 그려짐
-    paintConvSea(S.latestLetters); // 캐시가 있으면 즉시 한 번 더
-  });
-}
-
-// ══════════════════════════════════════════════════════════════════
-// 편지 보내기 (대화가 없으면 새로 만들고, 있으면 이어 붙임)
+// 편지 보내기
 // ══════════════════════════════════════════════════════════════════
 async function doSend() {
+  if (S.isReply) { await doReplySend(); return; }
+
   const txt = ($('ltxt')?.value || '').trim();
   if (S.mode==='text' && !txt) {
     const ta=$('ltxt'); if(ta){ta.style.outline='2px solid rgba(192,88,72,0.5)';ta.focus();setTimeout(()=>ta.style.outline='',1500);} return;
   }
   if (S.mode==='draw' && !S.drawn) return;
 
+  S.savedText = txt;
+  S.savedTo   = $('to-input')?.value   || '';
   S.savedFrom = $('from-input')?.value || '';
+
   showLoading(true, '편지를 봉투에 담는 중…');
-  const img = await capture();
-  const letter = { img: img.src, at: Date.now(), from: S.savedFrom };
+  S.senderImg = await capture();
 
   try {
-    if (!S.convId) {
-      const cid = await Promise.race([createConversation(letter), new Promise(r=>setTimeout(()=>r(null),4000))]);
-      if (cid) {
-        S.convId = cid;
-        history.replaceState(null,'',`${location.pathname}?c=${cid}`);
-      }
-    } else {
-      await Promise.race([addLetter(S.convId, letter), new Promise(r=>setTimeout(r,4000))]);
-    }
-  } catch(e){ console.warn('전송 실패:', e); }
+    const p1=saveLetter({senderData:S.senderImg.src,replyData:null,mode:S.mode});
+    S.letterId = await Promise.race([p1, new Promise(r=>setTimeout(()=>r(null),3000))]);
+  } catch(e){ console.warn('저장 실패:',e); }
 
-  S.shareUrl = S.convId
-    ? `${location.origin}${location.pathname}?c=${S.convId}`
-    : location.href;
-
-  // 방금 보낸 편지를 즉시 반영(서버 응답 전에도 보이도록)
-  S.latestLetters = [...(S.latestLetters||[]), letter];
-
+  S.shareUrl = `${location.origin}${location.pathname}?id=${S.letterId||'preview'}`;
   showLoading(false);
-  showYokaiDance(()=>openConvSea());
+
+  // 요괴 춤 전환 씬
+  showYokaiDance(() => {
+    inkTransition(
+      'radial-gradient(circle, rgba(220,148,132,0.95) 0%, rgba(50,110,140,0.92) 100%)',
+      () => {
+        $('sea-msg').textContent='편지가 바다 위를 떠다니고 있어요 ✦';
+        $('sea-sub').textContent='마음에 드시나요?';
+        $('share-btn').style.display='block';
+        $('edit-btn').style.display='block';
+        $('apply-btn').style.display='block';
+        $('reply-btn').style.display='none';
+        $('new-btn').style.display='none';
+        show('s-sea');
+        startSea('sea-canvas',[{img:S.senderImg,x:.28,y:.18,vx:.28,vy:-.07,a:-.04,va:.00018,sw:.65,ph:0}],true);
+      }
+    );
+    if(S.letterId) startWatching(S.letterId);
+  });
 }
 
 // ══════════════════════════════════════════════════════════════════
-// 편지 쓰기 / 새 대화
+// 실시간 감지
 // ══════════════════════════════════════════════════════════════════
-function clearComposer(){
-  ['to-input','from-input','ltxt'].forEach(id=>{const el=$(id);if(el)el.value='';});
-  S.drawn=false; S.stickers=[];
-  S.drawDX=0; S.drawDY=0; applyDrawOffset();
-  const sl=$('sticker-layer'); if(sl) sl.innerHTML='';
-  if(S.drawCtx){const dl=$('draw-layer'); if(dl) S.drawCtx.clearRect(0,0,dl.width,dl.height);}
+function startWatching(id) {
+  if(S.watchUnsub){S.watchUnsub();S.watchUnsub=null;}
+  S.watchUnsub=watchLetter(id,data=>{
+    if(!data.replyData||$('s-shared').classList.contains('on')||S.replyImg)return;
+    const img=new Image();img.onload=()=>{S.replyImg=img;launchSharedSea();};img.src=data.replyData;
+  });
 }
 
-// 현재 대화에 이어서 편지 쓰기 (받는 사람도 같은 함수로 답장)
-function goCompose(){
-  clearComposer();
-  const cont = !!S.convId;
-  $('write-title').innerHTML = cont
-    ? '편지를 이어서<br>바다에 띄워 보세요'
-    : '전하지 못한 마음을<br>바다에 띄워 보세요';
-  $('write-sub').textContent = cont
-    ? '같은 바다 위에 두 사람의 편지가 함께 쌓여요.'
-    : '그리운 누군가에게 편지를 써서 바다에 보내보세요.';
+function launchSharedSea(){
+  if(S.watchUnsub){S.watchUnsub();S.watchUnsub=null;}
+  inkTransition('radial-gradient(circle, rgba(100,180,200,0.92) 0%, rgba(30,90,120,0.95) 100%)',()=>{
+    show('s-shared');
+    const items=[];
+    if(S.senderImg)items.push({img:S.senderImg,x:.06,y:.14,vx:.20,vy:-.05,a:-.05,va:.00015,sw:.55,ph:0});
+    if(S.replyImg) items.push({img:S.replyImg, x:.36,y:.36,vx:.17,vy:-.04,a:.06, va:-.00015,sw:.50,ph:1.8});
+    startSea('shared-canvas',items,true);
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 수정하기
+// ══════════════════════════════════════════════════════════════════
+function editLetter() {
+  if(S.seaRaf){cancelAnimationFrame(S.seaRaf);S.seaRaf=null;}
+  const ta=$('ltxt');if(ta)ta.value=S.savedText;
+  const ti=$('to-input');if(ti)ti.value=S.savedTo;
+  const fi=$('from-input');if(fi)fi.value=S.savedFrom;
+  $('write-title').innerHTML='전하지 못한 마음을 바다에 띄워 보세요';
+  $('write-sub').textContent='내용을 수정하고 다시 바다에 띄워 보세요.';
   $('send-btn-label').textContent='바다에 띄우기';
   $('send-main-btn').style.background='';
+  S.isReply=false;
   swTab('text');
   show('s-write');
   renderComposer();
 }
 
-// 완전히 새로운 대화 시작
-function goNewConversation(){
-  stopSea();
-  if(S.watchUnsub){S.watchUnsub();S.watchUnsub=null;}
-  S.convId=null; S.shareUrl=''; S.latestLetters=[]; _seaCount=-1;
-  history.replaceState(null,'',location.pathname);
-  goCompose();
-}
-
 // ══════════════════════════════════════════════════════════════════
-// 공유 (대화 링크 — 처음 한 번만 보내면 됨)
+// 공유
 // ══════════════════════════════════════════════════════════════════
 async function goShare() {
-  const url = S.shareUrl || location.href;
-  if (navigator.share) {
-    try {
-      await navigator.share({
-        title:'모모와 다락방의 수상한 요괴들 — 바다에 띄우는 편지',
-        text:'우리 둘의 편지가 같은 바다 위에 떠 있어요. 열어서 답장해 주세요 ✦',
-        url,
-      });
-      return;
-    } catch(e){ if(e.name==='AbortError') return; }
-  }
-  $('slink-txt').textContent=url; $('slink').dataset.url=url; show('s-share');
+  const url=S.shareUrl||location.href;
+  if(navigator.share){try{await navigator.share({title:'모모와 다락방의 수상한 요괴들 — 바다에 띄우는 편지 이벤트',text:'바다 위에 떠다니는 편지가 도착했어요. 열어보세요 ✦',url});return;}catch(e){if(e.name==='AbortError')return;}}
+  $('slink-txt').textContent=url;$('slink').dataset.url=url;show('s-share');
 }
 
 function copyLink(){
   const url=$('slink')?.dataset.url||S.shareUrl||location.href;
   if(navigator.clipboard)navigator.clipboard.writeText(url).then(()=>{$('copyhint').textContent='✓ 복사되었습니다!';setTimeout(()=>$('copyhint').textContent='탭하면 복사돼요',2000);});
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 수신인
+// ══════════════════════════════════════════════════════════════════
+function goReply(){setReplyMode();show('s-write');renderComposer();}
+function goNewLetter(){
+  if(S.seaRaf){cancelAnimationFrame(S.seaRaf);S.seaRaf=null;}
+  if(S.watchUnsub){S.watchUnsub();S.watchUnsub=null;}
+  resetState();setNewMode();show('s-write');renderComposer();
+}
+
+function setReplyMode(){
+  $('write-title').innerHTML='당신의 마음도<br>바다에 띄워 보세요';
+  $('write-sub').textContent='답장을 보내면 두 마음이 같은 바다 위에서 만납니다.';
+  $('send-btn-label').textContent='답장 띄우기';
+  $('send-main-btn').style.background='#5a7a98';
+  ['to-input','from-input','ltxt'].forEach(id=>{const el=$(id);if(el)el.value='';});
+  S.drawn=false;S.stickers=[];
+  S.drawDX=0;S.drawDY=0;applyDrawOffset();
+  const sl=$('sticker-layer');if(sl)sl.innerHTML='';
+  if(S.drawCtx){const dl=$('draw-layer');if(dl)S.drawCtx.clearRect(0,0,dl.width,dl.height);}
+  swTab('text');S.isReply=true;
+}
+function setNewMode(){
+  $('write-title').innerHTML='전하지 못한 마음을<br>바다에 띄워 보세요';
+  $('write-sub').textContent='그리운 누군가에게 편지를 써서 바다에 보내보세요.';
+  $('send-btn-label').textContent='바다에 띄우기';
+  $('send-main-btn').style.background='';
+  S.isReply=false;swTab('text');
+}
+
+function resetState(){
+  S.senderImg=null;S.replyImg=null;S.drawn=false;S.stickers=[];
+  S.drawDX=0;S.drawDY=0;applyDrawOffset();
+  S.letterId=null;S.shareUrl='';S.savedText='';S.savedTo='';S.savedFrom='';
+  const sl=$('sticker-layer');if(sl)sl.innerHTML='';
+  if(S.drawCtx){const dl=$('draw-layer');if(dl)S.drawCtx.clearRect(0,0,dl.width,dl.height);}
+  ['ltxt','to-input','from-input'].forEach(id=>{const el=$(id);if(el)el.value='';});
+}
+
+async function doReplySend(){
+  const txt=($('ltxt')?.value||'').trim();
+  if(S.mode==='text'&&!txt){$('ltxt')?.focus();return;}
+  if(S.mode==='draw'&&!S.drawn)return;
+  showLoading(true,'답장을 봉투에 담는 중…');
+  S.replyImg=await capture();
+  if(S.letterId){try{const p1=saveLetter({id:S.letterId,senderData:S.senderImg?.src||null,replyData:S.replyImg.src,mode:S.mode});await Promise.race([p1,new Promise(r=>setTimeout(r,3000))]);}catch(e){console.warn('답장 저장 실패:',e);}}
+  showLoading(false);
+  showYokaiDance(()=>launchSharedSea());
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -626,8 +587,14 @@ async function doApply(){
   if(!agree){if(err)err.textContent='개인정보 수집에 동의해 주세요.';return;}
   if(err)err.textContent='';
   showLoading(true,'응모 정보를 저장하는 중…');
-  try{const p1=saveApply({name,phone,email,convId:S.convId||null});await Promise.race([p1,new Promise(r=>setTimeout(r,3000))]);}catch(e){console.warn('응모 저장 실패:',e);}
+  try{const p1=saveApply({name,phone,email,letterId:S.letterId||null});await Promise.race([p1,new Promise(r=>setTimeout(r,3000))]);}catch(e){console.warn('응모 저장 실패:',e);}
   showLoading(false);show('s-done');
+}
+
+function restartAll(){
+  if(S.seaRaf){cancelAnimationFrame(S.seaRaf);S.seaRaf=null;}
+  if(S.watchUnsub){S.watchUnsub();S.watchUnsub=null;}
+  resetState();setNewMode();show('s-write');renderComposer();
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -681,15 +648,16 @@ function bindEvents() {
   const sm=$('send-main-btn');if(sm)sm.addEventListener('click',doSend);
 
   // 바다 버튼들
-  const rb=$('reply-btn');if(rb)rb.addEventListener('click',goCompose);
-  const nb=$('new-btn');if(nb)nb.addEventListener('click',goNewConversation);
+  const rb=$('reply-btn');if(rb)rb.addEventListener('click',goReply);
+  const nb=$('new-btn');if(nb)nb.addEventListener('click',goNewLetter);
   const sb=$('share-btn');if(sb)sb.addEventListener('click',goShare);
+  const eb=$('edit-btn');if(eb)eb.addEventListener('click',editLetter);
   const ab=$('apply-btn');if(ab)ab.addEventListener('click',()=>show('s-apply'));
 
-  // 공유 바다 버튼들(구 화면 — 호환 유지)
+  // 공유 바다 버튼들
   const sa=$('shared-apply-btn');if(sa)sa.addEventListener('click',()=>show('s-apply'));
   const ss=$('shared-share-btn');if(ss)ss.addEventListener('click',goShare);
-  const sr=$('shared-restart-btn');if(sr)sr.addEventListener('click',goNewConversation);
+  const sr=$('shared-restart-btn');if(sr)sr.addEventListener('click',restartAll);
 
   // 공유 화면
   const slink=$('slink');if(slink)slink.addEventListener('click',copyLink);
@@ -705,7 +673,7 @@ function bindEvents() {
   // 완료
   const dsb=$('done-sea-btn');if(dsb)dsb.addEventListener('click',()=>show('s-sea'));
   const dshb=$('done-share-btn');if(dshb)dshb.addEventListener('click',goShare);
-  const drb=$('done-restart-btn');if(drb)drb.addEventListener('click',goNewConversation);
+  const drb=$('done-restart-btn');if(drb)drb.addEventListener('click',restartAll);
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -716,30 +684,29 @@ async function init() {
   bindEvents();
   swTab('text');
 
-  const params = new URLSearchParams(location.search);
-  const cid = params.get('c');
-
-  // 대화 링크가 없으면 → 새 편지 작성 화면(기본)
-  if (!cid) { goCompose(); return; }
-
-  // 대화 링크로 들어옴 → 같은 바다를 실시간으로 함께 보기
-  S.convId = cid;
-  S.shareUrl = `${location.origin}${location.pathname}?c=${cid}`;
-  showLoading(true, '바다를 불러오는 중…');
-  try {
-    const conv = await loadConversation(cid);
-    S.latestLetters = (conv && conv.letters) ? conv.letters : [];
-    showLoading(false);
-    show('s-sea');
-    setupConvSeaButtons();
-    _seaCount = -1;
-    startConvWatch();                 // 실시간 감시 시작(즉시 현재 편지 렌더)
-    paintConvSea(S.latestLetters);    // 캐시가 있으면 즉시 그림
-  } catch(e) {
-    console.error('대화 불러오기 실패:', e);
-    showLoading(false);
-    goCompose();
-  }
+  const id=new URLSearchParams(location.search).get('id');
+  if(!id)return;
+  S.letterId=id;S.isReply=true;
+  showLoading(true,'편지를 불러오는 중…');
+  try{
+    const data=await loadLetter(id);
+    if(data?.senderData){
+      const img=new Image();
+      img.onload=()=>{
+        S.senderImg=img;showLoading(false);
+        if(data.replyData){
+          const ri=new Image();ri.onload=()=>{S.replyImg=ri;show('s-shared');startSea('shared-canvas',[{img:S.senderImg,x:.06,y:.14,vx:.20,vy:-.05,a:-.05,va:.00015,sw:.55,ph:0},{img:S.replyImg,x:.36,y:.36,vx:.17,vy:-.04,a:.06,va:-.00015,sw:.50,ph:1.8}],false);};ri.src=data.replyData;
+        } else {
+          $('sea-msg').textContent='누군가의 편지가 도착했어요 ✦';$('sea-sub').textContent='잠시 감상해 보세요';
+          $('reply-btn').style.display='block';$('new-btn').style.display='block';$('apply-btn').style.display='block';
+          $('share-btn').style.display='none';$('edit-btn').style.display='none';
+          show('s-sea');startSea('sea-canvas',[{img:S.senderImg,x:.28,y:.18,vx:.25,vy:-.06,a:-.04,va:.00018,sw:.65,ph:0}],false);
+          startWatching(id);
+        }
+      };
+      img.src=data.senderData;
+    } else showLoading(false);
+  }catch(e){console.error('불러오기 실패:',e);showLoading(false);}
 }
 
 // DOM이 완전히 준비된 후 실행 보장 (PC module 타이밍 문제 해결)
