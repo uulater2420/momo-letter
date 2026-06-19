@@ -49,8 +49,9 @@
   box-sizing: border-box; margin: 0; padding: 0;
   -webkit-tap-highlight-color: transparent;
 }
-html, body {
-  height: 100%; overscroll-behavior: none;
+html { height: 100%; }
+body {
+  min-height: 100%; overscroll-behavior: none;
   font-family: 'Noto Sans KR', sans-serif;
 }
 
@@ -60,7 +61,7 @@ html, body {
 #app {
   width: 100%; max-width: 390px; margin: 0 auto;
   min-height: 100vh; min-height: 100dvh;
-  position: relative; overflow: hidden;
+  position: relative; overflow-x: hidden;
   background-color: var(--sea-sky);
 }
 
@@ -126,7 +127,7 @@ html, body {
 .lcard {
   background: var(--paper);
   border-radius: var(--r) var(--r) 0 0;
-  flex: 1; position: relative; overflow: hidden;
+  flex: 1; position: relative; overflow: visible;
   /* 편지지 종이 느낌 그림자 */
   box-shadow:
     0 -6px 28px rgba(80,40,20,0.12),
@@ -678,7 +679,7 @@ html, body {
   display: flex;
   flex-direction: column;
   flex: 1;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* 미리보기 캔버스 래퍼 */
@@ -686,6 +687,7 @@ html, body {
   position: relative;
   flex: 1;
   min-height: 48vw;
+  overflow: hidden;
   background: var(--paper, #fefcf4);
 }
 #composer-canvas {
