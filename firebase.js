@@ -22,7 +22,7 @@
 // ─────────────────────────────────────────────────────────────────
 
 // ── Firebase 설정값 (콘솔에서 복사한 값으로 교체) ─────────────────
-const firebaseConfig = {
+const FIREBASE_CONFIG = {
   apiKey: "AIzaSyAXxYu3FxeD8v5Il0n8XRbPAzPz6fvNlsU",
   authDomain: "momo-letter.firebaseapp.com",
   projectId: "momo-letter",
