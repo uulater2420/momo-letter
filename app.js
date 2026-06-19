@@ -112,10 +112,25 @@ function renderComposer() {
     ctx.beginPath(); ctx.moveTo(0,28); ctx.lineTo(W,28); ctx.stroke();
   }
 
-  // ── 본문 텍스트는 캔버스에 그리지 않음 ──────────────────────
-  // 입력창(.overlay-textarea)이 캔버스 위에 떠서 글씨를 직접 보여주므로,
-  // 여기서 또 그리면 글씨가 두 겹으로 겹쳐 보인다. 표시는 입력창에 일임하고,
-  // 최종 이미지에 글씨를 새기는 일은 capture()가 따로 처리한다.
+  // ── 텍스트 레이어 합성 ──────────────────────────────────────
+  const txt = ($('ltxt')?.value || '').trim();
+  if (txt) {
+    const maxW = W - 52, areaH = H - 40;
+    function wl(sz) {
+      ctx.font = `300 ${sz}px "Gaegu", cursive`;
+      const ls = []; txt.split('\n').forEach(p => {
+        let l = ''; for (const ch of p) { const t=l+ch; if(ctx.measureText(t).width>maxW&&l){ls.push(l);l=ch;}else l=t; } ls.push(l);
+      }); return ls;
+    }
+    let fs = 16, lines = wl(fs);
+    while ((lines.length > 7 || lines.length * fs * 1.7 > areaH) && fs > 10) { fs -= 0.5; lines = wl(fs); }
+    ctx.fillStyle = '#2c2018';
+    ctx.font = `300 ${fs}px "Gaegu", cursive`;
+    ctx.textBaseline = 'top';
+    const lh = fs * 1.7;
+    const baseY = toName ? 36 : 20;
+    lines.slice(0, 8).forEach((l, i) => ctx.fillText(l, 44, baseY + i * lh));
+  }
 
   // ── 그림 레이어 합성 (그린 경우) ────────────────────────────
   if (S.drawn) {
@@ -278,17 +293,16 @@ function capture() {
       const lh=fs*1.75,sy=26+(areaH-lines.slice(0,6).length*lh)/2;
       lines.slice(0,6).forEach((l,i)=>ctx.fillText(l,40,sy+i*lh));
     }
-    // 그림 오버레이 (미리보기와 동일하게 전체 영역에 합성 → 위치 일치)
+    // 그림 오버레이
     if(S.drawn){
       const dl=$('draw-layer');
-      if(dl){ctx.globalAlpha=txt?0.85:1.0;ctx.drawImage(dl,0,0,OW,OH);ctx.globalAlpha=1.0;}
+      if(dl){ctx.globalAlpha=txt?0.85:1.0;ctx.drawImage(dl,0,22,OW,OH-36);ctx.globalAlpha=1.0;}
     }
-    // 스티커 (미리보기 .placed-sticker: 28px·좌상단 기준과 일치시킴)
+    // 스티커
     if(S.stickers.length){
       const wrap=$('composer-preview-wrap');
       const pw=wrap?.clientWidth||292,ph=wrap?.clientHeight||198;
-      ctx.textBaseline='top';
-      S.stickers.forEach(st=>{const sz=Math.round(OW/pw*28);ctx.font=sz+'px serif';ctx.fillText(st.emoji,(st.x/pw)*OW,(st.y/ph)*OH);});
+      S.stickers.forEach(st=>{const sz=Math.round(OW/pw*24);ctx.font=sz+'px serif';ctx.fillText(st.emoji,(st.x/pw)*OW,(st.y/ph)*OH+sz*0.8);});
     }
     // From.
     if(fromName){ctx.fillStyle='#c05848';ctx.font='700 11px "Noto Sans KR",sans-serif';const fw=ctx.measureText('From. '+fromName).width;ctx.fillText('From. '+fromName,OW-fw-8,OH-13);}
