@@ -1,5 +1,5 @@
 // ── app.js ────────────────────────────────────────────────────────
-import { createConversation, addLetter, loadConversation, watchConversation, saveApply } from './firebase.js';
+import { createConversation, addLetter, loadConversation, watchConversation, saveApply, getStatus } from './firebase.js';
 
 // ══════════════════════════════════════════════════════════════════
 // 상태
@@ -432,6 +432,40 @@ let _seaCount = -1;
 
 function stopSea(){ if(S.seaRaf){cancelAnimationFrame(S.seaRaf);S.seaRaf=null;} }
 
+// ── 연결 상태 진단 배지 (문제 해결 후 제거해도 됨) ───────────────
+async function renderFbStatus(){
+  let badge=document.getElementById('fb-status');
+  if(!badge){
+    badge=document.createElement('div');
+    badge.id='fb-status';
+    badge.style.cssText='position:fixed;left:8px;bottom:8px;z-index:99999;font:600 11px/1.35 -apple-system,sans-serif;padding:7px 11px;border-radius:10px;max-width:86vw;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.25);white-space:pre-wrap;word-break:break-word';
+    badge.title='탭하면 상세/숨김';
+    badge.addEventListener('click',()=>{ badge.dataset.open = badge.dataset.open==='1'?'0':'1'; renderFbStatus(); });
+    document.body.appendChild(badge);
+  }
+  const open = badge.dataset.open==='1';
+  let s;
+  try { s = await getStatus(); } catch(e){ s = {configured:false,connected:false,lastError:e.message}; }
+
+  if(!s.configured){
+    badge.style.background='#f8d7da'; badge.style.color='#842029';
+    badge.textContent='🔴 로컬 모드 — firebase.js 설정값이 비어 있어요\n(기기 간 공유 불가). FIREBASE_CONFIG를 채우세요.';
+  } else if(!s.connected){
+    badge.style.background='#f8d7da'; badge.style.color='#842029';
+    badge.textContent='🔴 Firebase 연결 실패' + (open && s.lastError ? '\n'+s.lastError : ' — 탭하면 상세');
+  } else if(s.lastError){
+    badge.style.background='#fff3cd'; badge.style.color='#664d03';
+    badge.textContent='🟡 연결됨, 저장/읽기 오류(규칙 확인)' + (open && s.lastError ? '\n'+s.lastError : ' — 탭하면 상세');
+  } else {
+    badge.style.background='#d1e7dd'; badge.style.color='#0f5132';
+    badge.textContent='🟢 실시간 공유 켜짐';
+    // 정상이면 4초 뒤 살짝 숨김
+    clearTimeout(badge._t);
+    badge._t=setTimeout(()=>{ badge.style.opacity='0'; badge.style.transition='opacity .6s'; }, 4000);
+    badge.style.opacity='1';
+  }
+}
+
 // src(dataURL) → Image (캐시)
 function loadImg(src){
   return new Promise(res=>{
@@ -531,15 +565,17 @@ async function doSend() {
 
   try {
     if (!S.convId) {
-      const cid = await Promise.race([createConversation(letter), new Promise(r=>setTimeout(()=>r(null),4000))]);
+      const cid = await createConversation(letter);
       if (cid) {
         S.convId = cid;
         history.replaceState(null,'',`${location.pathname}?c=${cid}`);
       }
     } else {
-      await Promise.race([addLetter(S.convId, letter), new Promise(r=>setTimeout(r,4000))]);
+      await addLetter(S.convId, letter);
     }
   } catch(e){ console.warn('전송 실패:', e); }
+
+  renderFbStatus(); // 전송 결과(저장 성공/실패)를 화면 배지에 반영
 
   S.shareUrl = S.convId
     ? `${location.origin}${location.pathname}?c=${S.convId}`
@@ -715,6 +751,7 @@ async function init() {
   initComposer();
   bindEvents();
   swTab('text');
+  renderFbStatus();  // 연결 상태를 화면에 표시(진단)
 
   const params = new URLSearchParams(location.search);
   const cid = params.get('c');

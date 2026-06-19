@@ -22,14 +22,13 @@
 // ─────────────────────────────────────────────────────────────────
 
 // ── Firebase 설정값 (콘솔에서 복사한 값으로 교체) ─────────────────
-const firebaseConfig = {
-  apiKey: "AIzaSyAXxYu3FxeD8v5Il0n8XRbPAzPz6fvNlsU",
-  authDomain: "momo-letter.firebaseapp.com",
-  projectId: "momo-letter",
-  storageBucket: "momo-letter.firebasestorage.app",
-  messagingSenderId: "715586990451",
-  appId: "1:715586990451:web:6779e305d4d83f5dccd506",
-  measurementId: "G-MFWK4LRLLR"
+const FIREBASE_CONFIG = {
+  apiKey:            "여기에-붙여넣기",
+  authDomain:        "여기에-붙여넣기",
+  projectId:         "여기에-붙여넣기",
+  storageBucket:     "여기에-붙여넣기",
+  messagingSenderId: "여기에-붙여넣기",
+  appId:             "여기에-붙여넣기",
 };
 
 const IS_CONFIGURED = FIREBASE_CONFIG.apiKey !== "여기에-붙여넣기";
@@ -58,6 +57,7 @@ async function initFirebase() {
     console.log('[Firebase] 연결 성공');
     return true;
   } catch (e) {
+    _lastError = '연결 실패: ' + e.message;
     console.warn('[Firebase] 연결 실패 → 로컬 모드:', e.message);
     return false;
   }
@@ -68,16 +68,30 @@ const firebaseReady = initFirebase();
 function makeId() { return 'momo_' + Math.random().toString(36).slice(2, 9); }
 function sanitize(l) { return { img: l.img, at: l.at || Date.now(), from: l.from || '' }; }
 
+// ── 진단용 상태 ──────────────────────────────────────────────────
+let _lastError = '';
+function tmo(p, ms){ return Promise.race([ p, new Promise((_, rej)=>setTimeout(()=>rej(new Error('네트워크 시간 초과')), ms)) ]); }
+
+// 현재 연결 상태를 앱이 화면에 표시할 수 있도록 제공
+export async function getStatus(){
+  await firebaseReady;
+  return { configured: IS_CONFIGURED, connected: !!db, lastError: _lastError };
+}
+
 // ── 대화 만들기 (첫 편지로 새 대화 생성) ──────────────────────────
 export async function createConversation(firstLetter) {
   const cid = makeId();
   await firebaseReady;
   if (db) {
     try {
-      await _setDoc(_doc(db, 'conversations', cid), { createdAt: Date.now() });
-      await _addDoc(_collection(db, 'conversations', cid, 'letters'), sanitize(firstLetter));
+      await tmo((async () => {
+        await _setDoc(_doc(db, 'conversations', cid), { createdAt: Date.now() });
+        await _addDoc(_collection(db, 'conversations', cid, 'letters'), sanitize(firstLetter));
+      })(), 8000);
+      _lastError = '';
       return cid;
     } catch (e) {
+      _lastError = '저장 실패: ' + e.message;
       console.warn('[createConversation] Firebase 실패, 로컬 저장:', e.message);
     }
   }
@@ -90,9 +104,11 @@ export async function addLetter(cid, letter) {
   await firebaseReady;
   if (db) {
     try {
-      await _addDoc(_collection(db, 'conversations', cid, 'letters'), sanitize(letter));
+      await tmo(_addDoc(_collection(db, 'conversations', cid, 'letters'), sanitize(letter)), 8000);
+      _lastError = '';
       return;
     } catch (e) {
+      _lastError = '저장 실패: ' + e.message;
       console.warn('[addLetter] Firebase 실패, 로컬 저장:', e.message);
     }
   }
@@ -106,9 +122,11 @@ export async function loadConversation(cid) {
   if (db) {
     try {
       const q = _query(_collection(db, 'conversations', cid, 'letters'), _orderBy('at'));
-      const snap = await _getDocs(q);
+      const snap = await tmo(_getDocs(q), 8000);
+      _lastError = '';
       return { letters: snap.docs.map(d => d.data()) };
     } catch (e) {
+      _lastError = '불러오기 실패: ' + e.message;
       console.warn('[loadConversation] Firebase 실패, 로컬 확인:', e.message);
     }
   }
