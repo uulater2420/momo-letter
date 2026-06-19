@@ -22,13 +22,13 @@
 // ─────────────────────────────────────────────────────────────────
 
 // ── Firebase 설정값 (콘솔에서 복사한 값으로 교체) ─────────────────
-const FIREBASE_CONFIG = {
-  apiKey:            "여기에-붙여넣기",
-  authDomain:        "여기에-붙여넣기",
-  projectId:         "여기에-붙여넣기",
-  storageBucket:     "여기에-붙여넣기",
-  messagingSenderId: "여기에-붙여넣기",
-  appId:             "여기에-붙여넣기",
+const firebaseConfig = {
+  apiKey: "AIza...",
+  authDomain: "letter-to-momo.firebaseapp.com",
+  projectId: "letter-to-momo",
+  storageBucket: "letter-to-momo.appspot.com",
+  messagingSenderId: "1234567890",
+  appId: "1:1234...:web:abcd..."
 };
 
 const IS_CONFIGURED = FIREBASE_CONFIG.apiKey !== "여기에-붙여넣기";
