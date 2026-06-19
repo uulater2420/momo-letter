@@ -10,6 +10,9 @@ const S = {
   isDrawing: false, lastX: 0, lastY: 0,
   drawn: false,
   drawCtx: null,
+  drawTool: 'pen',          // 'pen'(그리기) | 'move'(이동)
+  drawDX: 0, drawDY: 0,     // 그림 전체 이동 오프셋(CSS px)
+  moveStartX: 0, moveStartY: 0, moveBaseDX: 0, moveBaseDY: 0,
   stickers: [],
   senderImg: null, replyImg: null,
   letterId: null, shareUrl: '',
@@ -112,32 +115,17 @@ function renderComposer() {
     ctx.beginPath(); ctx.moveTo(0,28); ctx.lineTo(W,28); ctx.stroke();
   }
 
-  // ── 텍스트 레이어 합성 ──────────────────────────────────────
-  const txt = ($('ltxt')?.value || '').trim();
-  if (txt) {
-    const maxW = W - 52, areaH = H - 40;
-    function wl(sz) {
-      ctx.font = `300 ${sz}px "Gaegu", cursive`;
-      const ls = []; txt.split('\n').forEach(p => {
-        let l = ''; for (const ch of p) { const t=l+ch; if(ctx.measureText(t).width>maxW&&l){ls.push(l);l=ch;}else l=t; } ls.push(l);
-      }); return ls;
-    }
-    let fs = 16, lines = wl(fs);
-    while ((lines.length > 7 || lines.length * fs * 1.7 > areaH) && fs > 10) { fs -= 0.5; lines = wl(fs); }
-    ctx.fillStyle = '#2c2018';
-    ctx.font = `300 ${fs}px "Gaegu", cursive`;
-    ctx.textBaseline = 'top';
-    const lh = fs * 1.7;
-    const baseY = toName ? 36 : 20;
-    lines.slice(0, 8).forEach((l, i) => ctx.fillText(l, 44, baseY + i * lh));
-  }
+  // ── 본문 텍스트는 캔버스에 그리지 않음 ──────────────────────
+  // 입력창(.overlay-textarea)이 캔버스 위에 떠서 글씨를 직접 보여주므로,
+  // 여기서 또 그리면 글씨가 두 겹으로 겹쳐 보인다. 표시는 입력창에 일임하고,
+  // 최종 이미지에 글씨를 새기는 일은 capture()가 따로 처리한다.
 
-  // ── 그림 레이어 합성 (그린 경우) ────────────────────────────
+  // ── 그림 레이어 합성 (그린 경우, 이동 오프셋 반영) ──────────
   if (S.drawn) {
     const dl = $('draw-layer');
     if (dl && dl.width > 0) {
       ctx.globalAlpha = 0.92;
-      ctx.drawImage(dl, 0, 0, W, H);
+      ctx.drawImage(dl, S.drawDX, S.drawDY, W, H);
       ctx.globalAlpha = 1.0;
     }
   }
@@ -180,7 +168,7 @@ function swTab(mode) {
   const sl = $('sticker-layer');
   if (sl) sl.style.pointerEvents = mode === 'sticker' ? 'auto' : 'none';
 
-  if (mode === 'draw') initDrawLayer();
+  if (mode === 'draw') { initDrawLayer(); setDrawTool('pen'); }
 
   // 꾸미기 탭: composer 다시 렌더(텍스트+그림 합성 보여주기)
   if (mode === 'sticker') renderComposer();
@@ -205,36 +193,84 @@ function initDrawLayer() {
     S.drawCtx = ctx;
   }
   const ctx = S.drawCtx;
+  applyDrawOffset();
 
+  // CSS 변형(이동)까지 반영해 캔버스 내부 좌표를 구함
   function getPos(e) {
     const r = dl.getBoundingClientRect();
-    if (e.touches && e.touches[0]) {
-      return { x: e.touches[0].clientX - r.left, y: e.touches[0].clientY - r.top };
-    }
-    return { x: e.clientX - r.left, y: e.clientY - r.top };
+    // r 은 translate 변형을 포함하므로, 그 기준으로 빼면 내부 좌표가 된다
+    return {
+      x: (e.clientX - r.left) * (W / r.width),
+      y: (e.clientY - r.top)  * (H / r.height),
+    };
   }
-  // 이미 이벤트 등록됐으면 skip
+
+  // 마우스·터치를 하나로 합친 포인터 이벤트 사용 (모바일 중복 발생 방지)
   if (dl._eventsSet) return;
   dl._eventsSet = true;
-  dl.addEventListener('mousedown',  e => { S.isDrawing=true; const p=getPos(e); S.lastX=p.x; S.lastY=p.y; });
-  dl.addEventListener('mousemove',  e => {
-    if (!S.isDrawing) return; S.drawn = true;
-    const p = getPos(e);
-    ctx.strokeStyle = S.penColor; ctx.lineWidth = S.penSize;
-    ctx.beginPath(); ctx.moveTo(S.lastX,S.lastY); ctx.lineTo(p.x,p.y); ctx.stroke();
-    S.lastX = p.x; S.lastY = p.y;
+
+  dl.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    dl.setPointerCapture?.(e.pointerId);
+    if (S.drawTool === 'move') {
+      S.isDrawing = true;
+      S.moveStartX = e.clientX; S.moveStartY = e.clientY;
+      S.moveBaseDX = S.drawDX;  S.moveBaseDY = S.drawDY;
+    } else {
+      S.isDrawing = true;
+      const p = getPos(e); S.lastX = p.x; S.lastY = p.y;
+      // 점 하나만 찍어도 표시되도록
+      ctx.strokeStyle = S.penColor; ctx.lineWidth = S.penSize;
+      ctx.beginPath(); ctx.arc(p.x, p.y, S.penSize/2, 0, Math.PI*2);
+      ctx.fillStyle = S.penColor; ctx.fill();
+      S.drawn = true;
+    }
   });
-  dl.addEventListener('mouseup',    () => S.isDrawing = false);
-  dl.addEventListener('mouseleave', () => S.isDrawing = false);
-  dl.addEventListener('touchstart', e => { e.preventDefault(); S.isDrawing=true; const p=getPos(e); S.lastX=p.x; S.lastY=p.y; }, {passive:false});
-  dl.addEventListener('touchmove',  e => {
-    e.preventDefault(); if (!S.isDrawing) return; S.drawn = true;
-    const p = getPos(e);
-    ctx.strokeStyle = S.penColor; ctx.lineWidth = S.penSize;
-    ctx.beginPath(); ctx.moveTo(S.lastX,S.lastY); ctx.lineTo(p.x,p.y); ctx.stroke();
-    S.lastX = p.x; S.lastY = p.y;
-  }, {passive:false});
-  dl.addEventListener('touchend', e => { e.preventDefault(); S.isDrawing=false; }, {passive:false});
+
+  dl.addEventListener('pointermove', e => {
+    if (!S.isDrawing) return;
+    e.preventDefault();
+    if (S.drawTool === 'move') {
+      const r = dl.getBoundingClientRect();
+      const sx = W / r.width, sy = H / r.height;
+      S.drawDX = S.moveBaseDX + (e.clientX - S.moveStartX) * sx;
+      S.drawDY = S.moveBaseDY + (e.clientY - S.moveStartY) * sy;
+      applyDrawOffset();
+    } else {
+      const p = getPos(e);
+      ctx.strokeStyle = S.penColor; ctx.lineWidth = S.penSize;
+      ctx.beginPath(); ctx.moveTo(S.lastX, S.lastY); ctx.lineTo(p.x, p.y); ctx.stroke();
+      S.lastX = p.x; S.lastY = p.y; S.drawn = true;
+    }
+  });
+
+  const endStroke = e => {
+    if (!S.isDrawing) return;
+    S.isDrawing = false;
+    dl.releasePointerCapture?.(e.pointerId);
+  };
+  dl.addEventListener('pointerup', endStroke);
+  dl.addEventListener('pointercancel', endStroke);
+  dl.addEventListener('pointerleave', endStroke);
+}
+
+// 그림 레이어에 이동 오프셋을 화면(CSS)으로 반영
+function applyDrawOffset() {
+  const dl = $('draw-layer');
+  if (dl) dl.style.transform = `translate(${S.drawDX}px, ${S.drawDY}px)`;
+}
+
+// 그림 모드(그리기/이동) 전환
+function setDrawTool(tool) {
+  S.drawTool = tool;
+  const dl = $('draw-layer');
+  if (dl) dl.style.cursor = tool === 'move' ? 'grab' : 'crosshair';
+  const btn = $('btn-draw-mode');
+  if (btn) {
+    // 버튼에는 "탭하면 전환될 모드"를 표시
+    if (tool === 'move') { btn.textContent = '✏️ 그리기'; btn.dataset.mode = 'move'; btn.classList.add('on'); }
+    else                 { btn.textContent = '✋ 이동';   btn.dataset.mode = 'pen';  btn.classList.remove('on'); }
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -293,16 +329,23 @@ function capture() {
       const lh=fs*1.75,sy=26+(areaH-lines.slice(0,6).length*lh)/2;
       lines.slice(0,6).forEach((l,i)=>ctx.fillText(l,40,sy+i*lh));
     }
-    // 그림 오버레이
+    // 그림 오버레이 (미리보기와 동일 전체 영역 + 이동 오프셋 반영 → 위치 일치)
     if(S.drawn){
       const dl=$('draw-layer');
-      if(dl){ctx.globalAlpha=txt?0.85:1.0;ctx.drawImage(dl,0,22,OW,OH-36);ctx.globalAlpha=1.0;}
+      if(dl){
+        const W=S.composerW||OW, H=S.composerH||OH;
+        const ox=S.drawDX/W*OW, oy=S.drawDY/H*OH;
+        ctx.globalAlpha=txt?0.85:1.0;
+        ctx.drawImage(dl,ox,oy,OW,OH);
+        ctx.globalAlpha=1.0;
+      }
     }
-    // 스티커
+    // 스티커 (미리보기 .placed-sticker: 28px·좌상단 기준과 일치시킴)
     if(S.stickers.length){
       const wrap=$('composer-preview-wrap');
       const pw=wrap?.clientWidth||292,ph=wrap?.clientHeight||198;
-      S.stickers.forEach(st=>{const sz=Math.round(OW/pw*24);ctx.font=sz+'px serif';ctx.fillText(st.emoji,(st.x/pw)*OW,(st.y/ph)*OH+sz*0.8);});
+      ctx.textBaseline='top';
+      S.stickers.forEach(st=>{const sz=Math.round(OW/pw*28);ctx.font=sz+'px serif';ctx.fillText(st.emoji,(st.x/pw)*OW,(st.y/ph)*OH);});
     }
     // From.
     if(fromName){ctx.fillStyle='#c05848';ctx.font='700 11px "Noto Sans KR",sans-serif';const fw=ctx.measureText('From. '+fromName).width;ctx.fillText('From. '+fromName,OW-fw-8,OH-13);}
@@ -497,6 +540,7 @@ function setReplyMode(){
   $('send-main-btn').style.background='#5a7a98';
   ['to-input','from-input','ltxt'].forEach(id=>{const el=$(id);if(el)el.value='';});
   S.drawn=false;S.stickers=[];
+  S.drawDX=0;S.drawDY=0;applyDrawOffset();
   const sl=$('sticker-layer');if(sl)sl.innerHTML='';
   if(S.drawCtx){const dl=$('draw-layer');if(dl)S.drawCtx.clearRect(0,0,dl.width,dl.height);}
   swTab('text');S.isReply=true;
@@ -511,6 +555,7 @@ function setNewMode(){
 
 function resetState(){
   S.senderImg=null;S.replyImg=null;S.drawn=false;S.stickers=[];
+  S.drawDX=0;S.drawDY=0;applyDrawOffset();
   S.letterId=null;S.shareUrl='';S.savedText='';S.savedTo='';S.savedFrom='';
   const sl=$('sticker-layer');if(sl)sl.innerHTML='';
   if(S.drawCtx){const dl=$('draw-layer');if(dl)S.drawCtx.clearRect(0,0,dl.width,dl.height);}
@@ -570,11 +615,17 @@ function bindEvents() {
         S.penColor=el.dataset.c;
         dt.querySelectorAll('.cdot').forEach(d=>d.classList.remove('on'));
         el.classList.add('on');
+        setDrawTool('pen'); // 색을 고르면 자동으로 그리기 모드
       });
     });
-    const ps=$('pen-size');if(ps)ps.addEventListener('input',function(){S.penSize=+this.value;});
+    const ps=$('pen-size');if(ps)ps.addEventListener('input',function(){S.penSize=+this.value;setDrawTool('pen');});
+    // 이동 / 그리기 모드 전환
+    const md=$('btn-draw-mode');
+    if(md)md.addEventListener('click',()=>setDrawTool(S.drawTool==='move'?'pen':'move'));
+    // 지우기: 그림과 이동 위치 모두 초기화
     const bc=$('btn-clear-draw');if(bc)bc.addEventListener('click',()=>{
-      if(S.drawCtx){const dl=$('draw-layer');if(dl)S.drawCtx.clearRect(0,0,dl.width,dl.height);}S.drawn=false;
+      if(S.drawCtx){const dl=$('draw-layer');if(dl)S.drawCtx.clearRect(0,0,dl.width,dl.height);}
+      S.drawn=false; S.drawDX=0; S.drawDY=0; applyDrawOffset(); setDrawTool('pen');
     });
   }
 
