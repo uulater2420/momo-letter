@@ -23,12 +23,13 @@
 
 // ── Firebase 설정값 (콘솔에서 복사한 값으로 교체) ─────────────────
 const firebaseConfig = {
-  apiKey: "AIza...",
-  authDomain: "letter-to-momo.firebaseapp.com",
-  projectId: "letter-to-momo",
-  storageBucket: "letter-to-momo.appspot.com",
-  messagingSenderId: "1234567890",
-  appId: "1:1234...:web:abcd..."
+  apiKey: "AIzaSyAXxYu3FxeD8v5Il0n8XRbPAzPz6fvNlsU",
+  authDomain: "momo-letter.firebaseapp.com",
+  projectId: "momo-letter",
+  storageBucket: "momo-letter.firebasestorage.app",
+  messagingSenderId: "715586990451",
+  appId: "1:715586990451:web:6779e305d4d83f5dccd506",
+  measurementId: "G-MFWK4LRLLR"
 };
 
 const IS_CONFIGURED = FIREBASE_CONFIG.apiKey !== "여기에-붙여넣기";
