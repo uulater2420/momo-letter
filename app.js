@@ -93,7 +93,7 @@ function renderComposer() {
 
   // 종이 배경
   ctx.fillStyle = '#fefcf4'; ctx.fillRect(0,0,W,H);
-  // 줄선 (textarea line-height 36px 에 맞춤)
+  // 줄선
   ctx.strokeStyle = 'rgba(160,130,90,0.18)'; ctx.lineWidth = 0.6;
   const lineH = 36, startY = 14 + (toName ? 32 : 0);
   for (let y = startY; y < H; y += lineH) {
@@ -110,6 +110,36 @@ function renderComposer() {
     ctx.fillText('To. ' + toName, 44, 8);
     ctx.strokeStyle = 'rgba(220,120,100,0.18)'; ctx.lineWidth = 0.5;
     ctx.beginPath(); ctx.moveTo(0,28); ctx.lineTo(W,28); ctx.stroke();
+  }
+
+  // ── 텍스트 레이어 합성 ──────────────────────────────────────
+  const txt = ($('ltxt')?.value || '').trim();
+  if (txt) {
+    const maxW = W - 52, areaH = H - 40;
+    function wl(sz) {
+      ctx.font = `300 ${sz}px "Gaegu", cursive`;
+      const ls = []; txt.split('\n').forEach(p => {
+        let l = ''; for (const ch of p) { const t=l+ch; if(ctx.measureText(t).width>maxW&&l){ls.push(l);l=ch;}else l=t; } ls.push(l);
+      }); return ls;
+    }
+    let fs = 16, lines = wl(fs);
+    while ((lines.length > 7 || lines.length * fs * 1.7 > areaH) && fs > 10) { fs -= 0.5; lines = wl(fs); }
+    ctx.fillStyle = '#2c2018';
+    ctx.font = `300 ${fs}px "Gaegu", cursive`;
+    ctx.textBaseline = 'top';
+    const lh = fs * 1.7;
+    const baseY = toName ? 36 : 20;
+    lines.slice(0, 8).forEach((l, i) => ctx.fillText(l, 44, baseY + i * lh));
+  }
+
+  // ── 그림 레이어 합성 (그린 경우) ────────────────────────────
+  if (S.drawn) {
+    const dl = $('draw-layer');
+    if (dl && dl.width > 0) {
+      ctx.globalAlpha = 0.92;
+      ctx.drawImage(dl, 0, 0, W, H);
+      ctx.globalAlpha = 1.0;
+    }
   }
 }
 
@@ -134,9 +164,10 @@ function swTab(mode) {
   const ta = $('ltxt');
   if (ta) ta.style.pointerEvents = mode === 'text' ? 'auto' : 'none';
 
-  // 그림 레이어
+  // 그림 레이어: 그림 탭일 때만 활성화
   const dl = $('draw-layer');
   if (dl) dl.style.display = mode === 'draw' ? 'block' : 'none';
+
   // 그림 도구
   const dt = $('draw-tools');
   if (dt) dt.style.display = mode === 'draw' ? 'flex' : 'none';
@@ -144,11 +175,15 @@ function swTab(mode) {
   // 스티커 도구
   const st = $('sticker-tools');
   if (st) st.style.display = mode === 'sticker' ? 'block' : 'none';
+
   // 스티커 레이어 포인터
   const sl = $('sticker-layer');
   if (sl) sl.style.pointerEvents = mode === 'sticker' ? 'auto' : 'none';
 
   if (mode === 'draw') initDrawLayer();
+
+  // 꾸미기 탭: composer 다시 렌더(텍스트+그림 합성 보여주기)
+  if (mode === 'sticker') renderComposer();
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -156,16 +191,20 @@ function swTab(mode) {
 // ══════════════════════════════════════════════════════════════════
 function initDrawLayer() {
   const dl = $('draw-layer');
-  if (!dl || S.drawCtx) return;
+  if (!dl) return;
   const dpr = window.devicePixelRatio || 1;
   const W = S.composerW || 358;
   const H = S.composerH || Math.round(W * 0.68);
-  dl.width  = W * dpr; dl.height = H * dpr;
-  dl.style.width = W + 'px'; dl.style.height = H + 'px';
-  const ctx = dl.getContext('2d');
-  ctx.scale(dpr, dpr);
-  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-  S.drawCtx = ctx;
+  // 크기가 다를 때만 재초기화
+  if (!S.drawCtx || dl.width !== W * dpr) {
+    dl.width  = W * dpr; dl.height = H * dpr;
+    dl.style.width = W + 'px'; dl.style.height = H + 'px';
+    const ctx = dl.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    S.drawCtx = ctx;
+  }
+  const ctx = S.drawCtx;
 
   function getPos(e) {
     const r = dl.getBoundingClientRect();
@@ -174,6 +213,9 @@ function initDrawLayer() {
     }
     return { x: e.clientX - r.left, y: e.clientY - r.top };
   }
+  // 이미 이벤트 등록됐으면 skip
+  if (dl._eventsSet) return;
+  dl._eventsSet = true;
   dl.addEventListener('mousedown',  e => { S.isDrawing=true; const p=getPos(e); S.lastX=p.x; S.lastY=p.y; });
   dl.addEventListener('mousemove',  e => {
     if (!S.isDrawing) return; S.drawn = true;
@@ -616,4 +658,9 @@ async function init() {
   }catch(e){console.error('불러오기 실패:',e);showLoading(false);}
 }
 
-init();
+// DOM이 완전히 준비된 후 실행 보장 (PC module 타이밍 문제 해결)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}

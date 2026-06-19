@@ -276,17 +276,17 @@ html, body {
 }
 
 .sticker-grid {
-  display: grid; grid-template-columns: repeat(6,1fr);
-  gap: 5px; padding: 8px 12px 4px;
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 7px; padding: 6px 0 4px;
 }
 .sticker-btn {
-  background: rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.75);
   border: 1px solid rgba(160,130,90,0.18);
-  border-radius: var(--r-sm); padding: 6px 2px;
-  font-size: 20px; cursor: pointer;
+  border-radius: var(--r-sm); padding: 8px 4px;
+  font-size: 24px; cursor: pointer;
   transition: transform .15s, box-shadow .15s; text-align: center;
 }
-.sticker-btn:active { transform: scale(1.25); box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+.sticker-btn:active { transform: scale(1.22); box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
 
 /* ── From. 서명 ──────────────────────────────────────────── */
 .letter-from-row {
