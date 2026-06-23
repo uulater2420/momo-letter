@@ -117,6 +117,10 @@ function renderComposer() {
     ctx.beginPath(); ctx.moveTo(0,28); ctx.lineTo(W,28); ctx.stroke();
   }
 
+  // 본문 입력창: To. 줄과 겹치지 않도록 위 여백을 동적으로 조절
+  const ta = $('ltxt');
+  if (ta) ta.style.paddingTop = toName ? '40px' : '14px';
+
   // ── 본문 텍스트는 캔버스에 그리지 않음 ──────────────────────
   // 입력창(.overlay-textarea)이 캔버스 위에 떠서 글씨를 직접 보여주므로,
   // 여기서 또 그리면 글씨가 두 겹으로 겹쳐 보인다. 표시는 입력창에 일임하고,
@@ -358,7 +362,7 @@ function capture() {
 // ══════════════════════════════════════════════════════════════════
 // 바다 애니메이션
 // ══════════════════════════════════════════════════════════════════
-function startSea(canvasId, items, fadeIn) {
+function startSea(canvasId, imgs, fadeIn) {
   if(S.seaRaf){cancelAnimationFrame(S.seaRaf);S.seaRaf=null;}
   const canvas=$(canvasId);
   const box=canvas.parentElement;
@@ -366,18 +370,49 @@ function startSea(canvasId, items, fadeIn) {
   const W=box.clientWidth||390,H=box.clientHeight||window.innerHeight;
   canvas.width=W*dpr;canvas.height=H*dpr;
   canvas.style.width=W+'px';canvas.style.height=H+'px';
-  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
 
-  const letters=items.map(it=>{
-    const iw=it.img.naturalWidth||320,ih=it.img.naturalHeight||220;
-    const sw=W*it.sw,sh=sw*(ih/iw);
-    return{img:it.img,x:it.x*W,y:it.y*H,vx:it.vx,vy:it.vy,angle:it.a,va:it.va,sw,sh,alpha:fadeIn?0:0.93,phase:it.ph};
+  // ── 편지를 격자 슬롯에 배치(서로 겹치지 않게) ──────────────────
+  const n=imgs.length;
+  const cols = n<=1?1 : n<=4?2 : 3;
+  const rows = Math.max(1, Math.ceil(n/cols));
+  const ax0=0.06*W, ax1=0.94*W, ay0=0.06*H, ay1=0.50*H; // 하단 시트 위쪽 영역
+  const cellW=(ax1-ax0)/cols, cellH=(ay1-ay0)/rows;
+  const rnd=k=>{const s=Math.sin((k+1)*99.73)*1e4;return s-Math.floor(s);};
+
+  const letters=imgs.map((img,i)=>{
+    const iw=img.naturalWidth||320, ih=img.naturalHeight||220;
+    const col=i%cols, row=Math.floor(i/cols);
+    // 마지막 줄이 덜 찼으면 가운데 정렬
+    const inRow = (row===rows-1) ? (n - row*cols) : cols;
+    const rowOffset = (cols - inRow) * cellW / 2;
+    let sw=cellW*0.84, sh=sw*(ih/iw);
+    if(sh>cellH*0.80){ sh=cellH*0.80; sw=sh*(iw/ih); }
+    const cx = ax0 + rowOffset + cellW*col + cellW/2 + (rnd(i)-0.5)*cellW*0.08;
+    const cy = ay0 + cellH*row + cellH/2 + (rnd(i+7)-0.5)*cellH*0.08;
+    return { img, cx, cy, sw, sh, baseAngle:(rnd(i+3)-0.5)*0.10, phase:i*0.9, alpha:fadeIn?0:1 };
   });
-  const spd=fadeIn?0.007:0.015;
-  let t=0;
+  S.seaLetters = letters; // 탭 히트테스트용
 
+  // 탭하면 해당 편지를 크게 펼쳐 읽기 (한 번만 바인딩)
+  if(!canvas._tapBound){
+    canvas._tapBound=true;
+    canvas.style.cursor='pointer';
+    canvas.addEventListener('click', e=>{
+      const r=canvas.getBoundingClientRect();
+      const x=e.clientX-r.left, y=e.clientY-r.top;
+      const list=S.seaLetters||[];
+      for(let i=list.length-1;i>=0;i--){
+        const l=list[i];
+        if(x>=l.cx-l.sw/2 && x<=l.cx+l.sw/2 && y>=l.cy-l.sh/2-8 && y<=l.cy+l.sh/2+8){
+          openLetterModal(l.img.src); return;
+        }
+      }
+    });
+  }
+
+  let t=0;
   function bg(){
-    // 더 진하고 차가운 바다
     const g=ctx.createLinearGradient(0,0,0,H);
     g.addColorStop(0,   '#b0d0e0');
     g.addColorStop(0.22,'#5a90a8');
@@ -385,35 +420,61 @@ function startSea(canvasId, items, fadeIn) {
     g.addColorStop(0.75,'#163850');
     g.addColorStop(1,   '#0a2030');
     ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-    // 수면 아래 돌
     ctx.save();ctx.globalAlpha=0.06;
     for(let i=0;i<7;i++){const rx=((i*167+t*0.2)%W),ry=H*0.48+(i*71)%(H*0.42),rr=18+(i*43)%36;ctx.fillStyle='#081820';ctx.beginPath();ctx.ellipse(rx,ry,rr,rr*0.45,0,0,Math.PI*2);ctx.fill();}
     ctx.restore();
-    // 섬
     ctx.fillStyle='rgba(50,100,120,0.30)';
     ctx.beginPath();ctx.moveTo(W*0.0,H*0.37);ctx.bezierCurveTo(W*0.08,H*0.24,W*0.20,H*0.22,W*0.30,H*0.33);ctx.bezierCurveTo(W*0.36,H*0.38,W*0.40,H*0.40,W*0.46,H*0.39);ctx.lineTo(W*0.46,H*0.44);ctx.lineTo(W*0.0,H*0.44);ctx.closePath();ctx.fill();
-    // 파도선
     const wv=[{ry:0.42,amp:5,spd:0.008,ph:0.0,al:0.12,lw:1.0},{ry:0.50,amp:6,spd:0.006,ph:1.3,al:0.10,lw:1.1},{ry:0.58,amp:5,spd:0.010,ph:2.5,al:0.09,lw:0.9},{ry:0.66,amp:7,spd:0.007,ph:0.7,al:0.09,lw:1.0},{ry:0.75,amp:5,spd:0.009,ph:1.9,al:0.07,lw:0.8},{ry:0.84,amp:6,spd:0.006,ph:1.4,al:0.08,lw:1.0}];
     for(const w of wv){ctx.beginPath();ctx.strokeStyle=`rgba(255,255,255,${w.al})`;ctx.lineWidth=w.lw;for(let x=0;x<=W;x+=2){const y=H*w.ry+w.amp*Math.sin((x/W)*Math.PI*6+w.ph+t*w.spd*60);x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.stroke();}
-    // 윤슬
-    for(let i=0;i<5;i++){const gx=((i*173+t*7)%(W+80))-40,gy=H*0.40+(i*67)%(H*0.48),ga=0.08+0.11*Math.abs(Math.sin(t*0.04+i*0.9));const gr=ctx.createRadialGradient(gx,gy,0,gx,gy,36+i*8);gr.addColorStop(0,`rgba(255,255,255,${ga})`);gr.addColorStop(0.4,`rgba(200,230,245,${ga*0.5})`);gr.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=gr;ctx.beginPath();ctx.ellipse(gx,gy,36+i*8,(14+i*4)*(0.8+0.3*Math.abs(Math.sin(t*0.03+i))),0,0,Math.PI*2);ctx.fill();}
     for(let i=0;i<26;i++){const sx=((i*97+t*(5+i%4))%(W+20))-10,sy=H*0.37+(i*43+Math.sin(t*0.05+i)*8)%(H*0.52),sa=0.10+0.50*Math.pow(Math.abs(Math.sin(t*0.08+i*0.7)),2),sr=0.5+0.7*Math.abs(Math.sin(t*0.06+i*0.5));ctx.fillStyle=`rgba(255,255,255,${sa})`;ctx.beginPath();ctx.arc(sx,sy,sr,0,Math.PI*2);ctx.fill();}
-    for(let i=0;i<6;i++){const lx=((i*211+t*9)%(W+100))-50,ly=H*0.41+(i*59)%(H*0.46),la=0.09+0.16*Math.abs(Math.sin(t*0.05+i)),lw=10+(i*37)%24;ctx.strokeStyle=`rgba(255,255,255,${la})`;ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(lx,ly);ctx.bezierCurveTo(lx+lw*0.3,ly-2,lx+lw*0.7,ly+2,lx+lw,ly);ctx.stroke();}
   }
 
-  function dl(l){
-    const bY=Math.sin(t*0.04+l.phase)*4,bA=Math.sin(t*0.03+l.phase)*0.028;
-    ctx.save();ctx.globalAlpha=l.alpha;ctx.translate(l.x+l.sw/2,l.y+l.sh/2+bY);ctx.rotate(l.angle+bA);
-    ctx.shadowColor='rgba(0,30,60,0.20)';ctx.shadowBlur=10;ctx.shadowOffsetY=4;
-    ctx.drawImage(l.img,-l.sw/2,-l.sh/2,l.sw,l.sh);ctx.restore();
+  function drawLetter(l){
+    const bob=Math.sin(t*0.035+l.phase)*4;
+    const sway=Math.sin(t*0.025+l.phase)*0.02;
+    ctx.save();ctx.globalAlpha=l.alpha;
+    ctx.translate(l.cx, l.cy+bob);ctx.rotate(l.baseAngle+sway);
+    ctx.shadowColor='rgba(0,30,60,0.22)';ctx.shadowBlur=10;ctx.shadowOffsetY=4;
+    // 종이 테두리(살짝)로 가독감
+    ctx.drawImage(l.img,-l.sw/2,-l.sh/2,l.sw,l.sh);
+    ctx.restore();
   }
 
   function frame(){
     t++;ctx.clearRect(0,0,W,H);bg();
-    for(const l of letters){if(l.alpha<0.93)l.alpha=Math.min(0.93,l.alpha+spd);dl(l);l.x+=l.vx;l.y+=l.vy;l.angle+=l.va;if(l.x<W*0.03||l.x>W*0.72)l.vx*=-1;if(l.y<H*0.05||l.y>H*0.62)l.vy*=-1;}
+    for(const l of letters){ if(l.alpha<1) l.alpha=Math.min(1,l.alpha+(fadeIn?0.025:0.05)); drawLetter(l); }
     S.seaRaf=requestAnimationFrame(frame);
   }
   frame();
+}
+
+// ── 편지 크게 펼쳐 읽기 모달 ──────────────────────────────────────
+function openLetterModal(src){
+  let m=document.getElementById('letter-modal');
+  if(!m){
+    m=document.createElement('div');
+    m.id='letter-modal';
+    m.style.cssText='position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;background:rgba(8,22,36,0.86);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);padding:6vw;opacity:0;transition:opacity .22s';
+    const im=document.createElement('img');
+    im.style.cssText='max-width:92vw;max-height:82vh;border-radius:12px;box-shadow:0 18px 55px rgba(0,0,0,.55);background:#fefcf4';
+    const cl=document.createElement('button');
+    cl.textContent='✕'; cl.setAttribute('aria-label','닫기');
+    cl.style.cssText='position:absolute;top:calc(env(safe-area-inset-top,0px) + 16px);right:18px;width:42px;height:42px;border:none;border-radius:50%;background:rgba(255,255,255,0.94);font-size:20px;color:#333;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.35)';
+    const hint=document.createElement('p');
+    hint.textContent='탭하면 닫혀요';
+    hint.style.cssText='position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);left:0;right:0;text-align:center;color:rgba(255,255,255,0.7);font:500 13px sans-serif';
+    m.appendChild(im);m.appendChild(cl);m.appendChild(hint);
+    m.addEventListener('click',closeLetterModal);
+    document.body.appendChild(m);
+  }
+  m.querySelector('img').src=src;
+  m.style.display='flex';
+  requestAnimationFrame(()=>{ m.style.opacity='1'; });
+}
+function closeLetterModal(){
+  const m=document.getElementById('letter-modal');
+  if(m){ m.style.opacity='0'; setTimeout(()=>{m.style.display='none';},220); }
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -477,30 +538,6 @@ function loadImg(src){
   });
 }
 
-// 편지 N통을 바다에 흩뿌릴 위치/속도 계산 (편지가 많을수록 작게)
-function frac(x){ return x - Math.floor(x); }
-function layoutLetters(imgs){
-  const n=imgs.length;
-  const base = n<=2?0.60 : n<=4?0.50 : n<=6?0.42 : 0.36;
-  return imgs.map((img,i)=>{
-    const r =frac(Math.sin((i+1)*97.13)*1000);
-    const r2=frac(Math.sin((i+1)*43.77)*1000);
-    const col=i%3, row=Math.floor(i/3);
-    let x=0.05+col*0.21+r*0.06;
-    let y=0.09+row*0.15+r2*0.05;
-    x=Math.min(Math.max(x,0.04),0.64);
-    y=Math.min(Math.max(y,0.06),0.55);
-    return {
-      img, x, y,
-      vx:0.12+r*0.10, vy:-0.035-r2*0.04,
-      a:(i%2?1:-1)*(0.03+r*0.035),
-      va:(i%2?1:-1)*0.00013,
-      sw:base + (r-0.5)*0.04,
-      ph:i*0.7,
-    };
-  });
-}
-
 // 현재 대화의 편지들을 바다에 그림 (s-sea 가 보일 때만)
 function paintConvSea(letters){
   S.latestLetters = letters || [];
@@ -512,11 +549,11 @@ function paintConvSea(letters){
     if(!imgs.length) return;
     if(imgs.length===_seaCount) return; // 변화 없으면 그대로 유지
     _seaCount=imgs.length;
-    startSea('sea-canvas', layoutLetters(imgs), true);
+    startSea('sea-canvas', imgs, true);
     const sub=$('sea-sub');
     if(sub) sub.textContent = imgs.length<=1
       ? '🔗 링크를 공유하면 상대도 여기서 답장할 수 있어요'
-      : `지금까지 편지 ${imgs.length}통이 같은 바다에 떠 있어요`;
+      : `편지 ${imgs.length}통 · 편지를 탭하면 펼쳐서 읽을 수 있어요`;
   });
 }
 
