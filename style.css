@@ -480,6 +480,7 @@ body {
   word-break: break-all; margin-bottom: 8px; cursor: pointer;
   display: flex; align-items: center; gap: 8px;
   transition: background .18s;
+  -webkit-user-select: text; user-select: text;
 }
 .slinkbox:active { background: rgba(254,200,180,0.40); }
 .copyhint { font-size: 11px; color: var(--kawa-olive); text-align: center; }

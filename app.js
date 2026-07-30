@@ -680,9 +680,33 @@ async function goShare() {
   $('slink-txt').textContent=url; $('slink').dataset.url=url; show('s-share');
 }
 
-function copyLink(){
+function selectLinkText(){
+  const el=$('slink-txt');
+  if(el && window.getSelection){
+    try{ const r=document.createRange(); r.selectNodeContents(el);
+      const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(r); }catch(e){}
+  }
+}
+async function copyLink(){
   const url=$('slink')?.dataset.url||S.shareUrl||location.href;
-  if(navigator.clipboard)navigator.clipboard.writeText(url).then(()=>{$('copyhint').textContent='✓ 복사되었습니다!';setTimeout(()=>$('copyhint').textContent='탭하면 복사돼요',2000);});
+  const hint=$('copyhint');
+  const ok  =()=>{ if(hint){hint.textContent='✓ 복사됐어요! 붙여넣기 하세요';setTimeout(()=>{if(hint)hint.textContent='탭하면 복사돼요';},2600);} };
+  const fail=()=>{ if(hint)hint.textContent='자동 복사가 막혔어요 — 링크를 길게 눌러 복사하세요'; selectLinkText(); };
+  // 1) 최신 클립보드 API (보안 컨텍스트에서만 신뢰)
+  if(navigator.clipboard && window.isSecureContext){
+    try{ await navigator.clipboard.writeText(url); ok(); return; }catch(e){ /* 폴백으로 */ }
+  }
+  // 2) 폴백: 임시 입력창 + execCommand (인앱/구형 브라우저 대응)
+  try{
+    const ta=document.createElement('textarea');
+    ta.value=url; ta.setAttribute('readonly','');
+    ta.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select(); ta.setSelectionRange(0,url.length);
+    const done=document.execCommand('copy');
+    document.body.removeChild(ta);
+    done?ok():fail();
+  }catch(e){ fail(); }
 }
 
 // ══════════════════════════════════════════════════════════════════
