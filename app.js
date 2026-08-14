@@ -646,7 +646,7 @@ function goCompose(){
   $('write-sub').textContent = cont
     ? '같은 바다 위에 두 사람의 편지가 함께 쌓여요.'
     : '그리운 누군가에게 편지를 써서 바다에 보내보세요.';
-  $('send-btn-label').textContent='바다에 띄우기';
+  $('send-btn-label').textContent='편지 띄우고 숙박권 이벤트 참여하기';
   $('send-main-btn').style.background='';
   swTab('text');
   show('s-write');
@@ -776,6 +776,7 @@ function bindEvents() {
 
   // 보내기 버튼
   const sm=$('send-main-btn');if(sm)sm.addEventListener('click',doSend);
+  const ect=$('event-cta-top');if(ect)ect.addEventListener('click',()=>{$('prize-section')?.scrollIntoView({behavior:'smooth',block:'start'});});
 
   // 바다 버튼들
   const rb=$('reply-btn');if(rb)rb.addEventListener('click',goCompose);
