@@ -34,6 +34,40 @@ const FIREBASE_CONFIG = {
 
 const IS_CONFIGURED = FIREBASE_CONFIG.apiKey !== "여기에-붙여넣기";
 
+// ── 구글 시트 실시간 연동 (선택) ──────────────────────────────────
+//   1. 구글 시트 → 확장 프로그램 → Apps Script 에 google-apps-script.gs 내용 붙여넣기
+//   2. 배포 → 새 배포 → 웹 앱 (실행: 나, 액세스: 모든 사용자) → URL 복사
+//   3. 아래 SHEET_WEBHOOK_URL 에 그 URL 붙여넣기 (SHEET_TOKEN 은 스크립트와 동일하게)
+//   ※ 비워두면 시트 연동은 꺼지고, Firestore·어드민만 동작합니다.
+const SHEET_WEBHOOK_URL = "";                 // 예: https://script.google.com/macros/s/AKfy.../exec
+const SHEET_TOKEN       = "momo-sheet-2026";  // Apps Script 의 TOKEN 과 반드시 동일
+
+export function sheetEnabled(){ return !!SHEET_WEBHOOK_URL; }
+
+// 시트로 레코드 전송 (fire-and-forget; 응답은 확인하지 않음)
+function postToSheet(records){
+  if(!SHEET_WEBHOOK_URL) return;
+  try{
+    fetch(SHEET_WEBHOOK_URL, {
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ token: SHEET_TOKEN, records }),
+    }).catch(()=>{});
+  }catch(e){}
+}
+
+// (어드민) 현재 응모 전체를 시트로 한 번에 동기화
+export async function syncAllToSheet(){
+  if(!SHEET_WEBHOOK_URL) throw new Error('시트 URL이 설정되지 않았어요 (firebase.js 의 SHEET_WEBHOOK_URL)');
+  const applies = await loadAllApplies();
+  await fetch(SHEET_WEBHOOK_URL, {
+    method:'POST', mode:'no-cors',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({ token: SHEET_TOKEN, records: applies }),
+  }).catch(()=>{});
+  return applies.length;
+}
+
 // ── 로컬 메모리 저장소 (Firebase 미연결 시 사용) ──────────────────
 //   구조: LOCAL_STORE[cid] = { letters: [ {img, at, from}, ... ] }
 const LOCAL_STORE = {};
@@ -172,24 +206,26 @@ export async function loadAllApplies() {
 }
 
 // ── 이벤트 응모 저장 ──────────────────────────────────────────────
-export async function saveApply({ name, phone, email, convId, referral, sentLetter }) {
+export async function saveApply({ applyId, name, phone, email, convId, referral, sentLetter }) {
   await firebaseReady;
   const record = {
+    applyId: applyId || ('a_' + Date.now() + '_' + Math.random().toString(36).slice(2,7)),
     name, phone, email: email || '',
     convId: convId || '',
     referral: referral || 'direct',
     sentLetter: !!sentLetter,
     createdAt: Date.now(),
   };
+  let ok = false;
   if (db) {
     try {
       await tmo(_addDoc(_collection(db, 'applies'), record), 8000);
-      _lastError = '';
-      return;
+      _lastError = ''; ok = true;
     } catch (e) {
       _lastError = '응모 저장 실패: ' + e.message;
       console.warn('[saveApply] Firebase 실패:', e.message);
     }
   }
-  console.log('[응모 데이터 로컬]', record);
+  if (!ok) console.log('[응모 데이터 로컬]', record);
+  postToSheet([record]);   // 구글 시트로도 실시간 전송(설정된 경우)
 }

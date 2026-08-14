@@ -81,6 +81,7 @@
     <h1>🎁 이벤트 응모 현황</h1>
     <div class="top-actions">
       <button class="btn" id="refresh-btn">↻ 새로고침</button>
+      <button class="btn" id="sync-btn">🔄 시트 동기화</button>
       <button class="btn primary" id="csv-btn">⬇ CSV 내보내기</button>
     </div>
   </header>
@@ -121,7 +122,7 @@
 const ADMIN_PASSWORD = "momo2026!";
 // ─────────────────────────────────────────────────────────────
 
-import { loadAllApplies, getStatus } from './firebase.js';
+import { loadAllApplies, getStatus, syncAllToSheet, sheetEnabled } from './firebase.js';
 
 const $ = id => document.getElementById(id);
 let APPLIES = [];
@@ -148,6 +149,20 @@ async function openDash(){
 
 $('refresh-btn').addEventListener('click', refresh);
 $('csv-btn').addEventListener('click', exportCSV);
+$('sync-btn').addEventListener('click', async ()=>{
+  if(!sheetEnabled()){
+    alert('아직 시트 연동이 설정되지 않았어요.\nfirebase.js 의 SHEET_WEBHOOK_URL 에 Apps Script 웹앱 주소를 넣어주세요.');
+    return;
+  }
+  const btn=$('sync-btn'); btn.textContent='전송 중…'; btn.disabled=true;
+  try{
+    const n=await syncAllToSheet();
+    alert(`현재 응모 ${n}건을 시트로 보냈어요. 구글 시트를 확인해 주세요.\n(이미 있는 행은 자동으로 건너뜁니다.)`);
+  }catch(e){
+    alert('시트 전송 실패: ' + (e.message||e));
+  }
+  btn.textContent='🔄 시트 동기화'; btn.disabled=false;
+});
 
 const normPhone = p => (p||'').replace(/[^0-9]/g,'');
 const fmtDate = t => { try{ return new Date(t).toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return '—'; } };
@@ -157,7 +172,13 @@ async function refresh(){
   try{
     const st = await getStatus();
     if(!st.connected){
-      $('cards').innerHTML = '<div class="stat"><div class="label">상태</div><div class="num" style="font-size:15px;color:#c0392b">Firebase 미연결</div></div>';
+      const detail = st.configured
+        ? ('연결 실패' + (st.lastError ? ': ' + esc(st.lastError) : ' (원인 미상)'))
+        : 'firebase.js 의 FIREBASE_CONFIG 설정값이 비어 있어요';
+      $('cards').innerHTML =
+        '<div class="stat"><div class="label">상태</div>' +
+        '<div class="num" style="font-size:15px;color:#c0392b">Firebase 미연결</div>' +
+        '<div style="font-size:12px;color:#8a7a68;margin-top:8px;line-height:1.5">' + detail + '</div></div>';
       $('refresh-btn').textContent='↻ 새로고침';
       return;
     }
