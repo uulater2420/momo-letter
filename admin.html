@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="robots" content="noindex, nofollow"/>
+<title>모모 편지 이벤트 — 관리자</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet"/>
+<style>
+  :root{ --ink:#2c2018; --coral:#e07868; --coral-deep:#c05848; --line:#ece2d6; --muted:#8a7a68; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:'Noto Sans KR',sans-serif; color:var(--ink); background:#f6f2ec; }
+  /* 로그인 게이트 */
+  #gate{ position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(160deg,#fff4ee,#f4e6db); padding:24px; }
+  .gate-card{ background:#fff; border:1px solid var(--line); border-radius:18px; padding:30px 26px;
+    width:100%; max-width:340px; box-shadow:0 10px 30px rgba(0,0,0,0.08); text-align:center; }
+  .gate-card h1{ font-size:18px; margin:0 0 4px; }
+  .gate-card p{ font-size:12px; color:var(--muted); margin:0 0 18px; }
+  .gate-card input{ width:100%; padding:12px 14px; border:1px solid var(--line); border-radius:10px;
+    font-size:15px; font-family:inherit; margin-bottom:10px; }
+  .gate-card button{ width:100%; padding:12px; border:none; border-radius:10px; background:var(--coral);
+    color:#fff; font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; }
+  .gate-err{ color:#c0392b; font-size:12px; min-height:16px; margin-top:6px; }
+
+  /* 대시보드 */
+  #dash{ display:none; max-width:1000px; margin:0 auto; padding:22px 16px 60px; }
+  header.top{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:18px; }
+  header.top h1{ font-size:19px; margin:0; }
+  .top-actions{ display:flex; gap:8px; }
+  .btn{ border:1px solid var(--line); background:#fff; border-radius:10px; padding:9px 14px;
+    font-size:13px; font-weight:600; font-family:inherit; cursor:pointer; color:var(--ink); }
+  .btn.primary{ background:var(--coral); color:#fff; border-color:var(--coral); }
+  .btn:active{ transform:translateY(1px); }
+
+  .cards{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:18px; }
+  .stat{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px; }
+  .stat .label{ font-size:12px; color:var(--muted); }
+  .stat .num{ font-size:26px; font-weight:800; margin-top:4px; }
+  .stat .num small{ font-size:14px; font-weight:600; color:var(--muted); }
+
+  .panel{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:18px; }
+  .panel h2{ font-size:14px; margin:0 0 12px; }
+  .ref-row{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .ref-name{ width:110px; font-size:13px; font-weight:600; flex-shrink:0; }
+  .ref-bar{ flex:1; height:16px; background:#f0eae1; border-radius:8px; overflow:hidden; }
+  .ref-bar > span{ display:block; height:100%; background:var(--coral); }
+  .ref-val{ width:64px; text-align:right; font-size:12px; color:var(--muted); flex-shrink:0; }
+
+  .table-wrap{ overflow-x:auto; }
+  table{ width:100%; border-collapse:collapse; font-size:13px; min-width:640px; }
+  th,td{ text-align:left; padding:9px 10px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  th{ font-size:12px; color:var(--muted); font-weight:600; position:sticky; top:0; background:#fff; }
+  tr.dup td{ background:#fff6f4; }
+  .tag{ display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; }
+  .tag.dup{ background:#f8d7da; color:#a12b2b; }
+  .tag.yes{ background:#d8f0dd; color:#1f7a3a; }
+  .tag.no{ background:#eee7dd; color:#8a7a68; }
+  .empty{ text-align:center; color:var(--muted); padding:40px 0; font-size:14px; }
+  .note{ font-size:11px; color:var(--muted); margin-top:10px; line-height:1.6; }
+  .warn{ background:#fff8e6; border:1px solid #f0dca0; color:#8a6d1a; border-radius:10px; padding:10px 12px; font-size:12px; line-height:1.6; margin-bottom:18px; }
+</style>
+</head>
+<body>
+
+<!-- 비밀번호 게이트 -->
+<div id="gate">
+  <div class="gate-card">
+    <h1>🔒 관리자 로그인</h1>
+    <p>모모 편지 이벤트 응모 관리</p>
+    <input id="pw" type="password" placeholder="비밀번호" autocomplete="off"/>
+    <button id="pw-btn">들어가기</button>
+    <div class="gate-err" id="pw-err"></div>
+  </div>
+</div>
+
+<!-- 대시보드 -->
+<div id="dash">
+  <header class="top">
+    <h1>🎁 이벤트 응모 현황</h1>
+    <div class="top-actions">
+      <button class="btn" id="refresh-btn">↻ 새로고침</button>
+      <button class="btn primary" id="csv-btn">⬇ CSV 내보내기</button>
+    </div>
+  </header>
+
+  <div class="warn">
+    ⚠️ 이 페이지는 개인정보(이름·연락처)를 다룹니다. 비밀번호는 최소한의 잠금일 뿐, 실제 보안이 아니에요.
+    운영 시에는 Firestore 규칙을 잠그고 관리자 로그인(Firebase Auth)을 적용하는 것을 권장합니다.
+  </div>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="panel">
+    <h2>유입 경로별 분포</h2>
+    <div id="ref-list"></div>
+  </div>
+
+  <div class="panel">
+    <h2>참여자 목록 <span id="count-label" style="font-weight:400;color:var(--muted);font-size:12px"></span></h2>
+    <div class="table-wrap">
+      <table id="tbl">
+        <thead><tr>
+          <th>#</th><th>이름</th><th>연락처</th><th>이메일</th>
+          <th>유입경로</th><th>편지참여</th><th>중복</th><th>응모시각</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="empty" style="display:none">아직 응모 데이터가 없습니다.</div>
+    <p class="note">· 중복은 <b>연락처(숫자만)</b> 기준으로 판정합니다. 같은 번호로 여러 번 응모하면 중복으로 표시돼요.<br>
+    · "편지참여"는 편지를 보내거나 답장한 뒤 응모했는지 여부입니다.</p>
+  </div>
+</div>
+
+<script type="module">
+// ─────────────────────────────────────────────────────────────
+//  ⚙️ 관리자 비밀번호 — 아래 값을 원하는 비밀번호로 바꾸세요.
+//     (주의: 클라이언트 측 잠금이라 소스를 보면 노출됩니다. 임시 방편입니다.)
+const ADMIN_PASSWORD = "momo2026!";
+// ─────────────────────────────────────────────────────────────
+
+import { loadAllApplies, getStatus } from './firebase.js';
+
+const $ = id => document.getElementById(id);
+let APPLIES = [];
+
+// 비밀번호 게이트
+function tryLogin(){
+  const v = $('pw').value;
+  if (v === ADMIN_PASSWORD){
+    sessionStorage.setItem('momo_admin_ok','1');
+    openDash();
+  } else {
+    $('pw-err').textContent = '비밀번호가 올바르지 않습니다.';
+  }
+}
+$('pw-btn').addEventListener('click', tryLogin);
+$('pw').addEventListener('keydown', e=>{ if(e.key==='Enter') tryLogin(); });
+if (sessionStorage.getItem('momo_admin_ok')==='1') openDash();
+
+async function openDash(){
+  $('gate').style.display='none';
+  $('dash').style.display='block';
+  await refresh();
+}
+
+$('refresh-btn').addEventListener('click', refresh);
+$('csv-btn').addEventListener('click', exportCSV);
+
+const normPhone = p => (p||'').replace(/[^0-9]/g,'');
+const fmtDate = t => { try{ return new Date(t).toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return '—'; } };
+
+async function refresh(){
+  $('refresh-btn').textContent='불러오는 중…';
+  try{
+    const st = await getStatus();
+    if(!st.connected){
+      $('cards').innerHTML = '<div class="stat"><div class="label">상태</div><div class="num" style="font-size:15px;color:#c0392b">Firebase 미연결</div></div>';
+      $('refresh-btn').textContent='↻ 새로고침';
+      return;
+    }
+    APPLIES = await loadAllApplies();
+    render();
+  }catch(e){
+    alert('데이터를 불러오지 못했어요: ' + (e.message||e));
+  }
+  $('refresh-btn').textContent='↻ 새로고침';
+}
+
+function render(){
+  const total = APPLIES.length;
+  const phoneCount = {};
+  APPLIES.forEach(a=>{ const k=normPhone(a.phone); if(k) phoneCount[k]=(phoneCount[k]||0)+1; });
+  const unique = Object.keys(phoneCount).length;
+  const dupSubs = total - unique;                 // 중복 응모 건수
+  const dupRate = total ? Math.round(dupSubs/total*100) : 0;
+  const sentCnt = APPLIES.filter(a=>a.sentLetter).length;
+  const sentRate = total ? Math.round(sentCnt/total*100) : 0;
+
+  // 요약 카드
+  $('cards').innerHTML = `
+    <div class="stat"><div class="label">총 응모</div><div class="num">${total}<small> 건</small></div></div>
+    <div class="stat"><div class="label">고유 참여자 (연락처)</div><div class="num">${unique}<small> 명</small></div></div>
+    <div class="stat"><div class="label">중복 응모</div><div class="num">${dupSubs}<small> 건 · ${dupRate}%</small></div></div>
+    <div class="stat"><div class="label">편지 참여 후 응모</div><div class="num">${sentCnt}<small> 건 · ${sentRate}%</small></div></div>
+  `;
+
+  // 유입 경로 분포
+  const ref = {};
+  APPLIES.forEach(a=>{ const r=a.referral||'direct'; ref[r]=(ref[r]||0)+1; });
+  const refEntries = Object.entries(ref).sort((a,b)=>b[1]-a[1]);
+  const maxRef = refEntries.length ? refEntries[0][1] : 1;
+  $('ref-list').innerHTML = refEntries.length ? refEntries.map(([name,cnt])=>`
+    <div class="ref-row">
+      <div class="ref-name">${esc(name)}</div>
+      <div class="ref-bar"><span style="width:${Math.round(cnt/maxRef*100)}%"></span></div>
+      <div class="ref-val">${cnt}건 (${total?Math.round(cnt/total*100):0}%)</div>
+    </div>`).join('') : '<div class="empty">데이터 없음</div>';
+
+  // 참여자 표
+  $('count-label').textContent = `· 총 ${total}건`;
+  const tbody = $('tbody');
+  $('empty').style.display = total ? 'none' : 'block';
+  tbody.innerHTML = APPLIES.map((a,i)=>{
+    const isDup = normPhone(a.phone) && phoneCount[normPhone(a.phone)]>1;
+    return `<tr class="${isDup?'dup':''}">
+      <td>${total-i}</td>
+      <td>${esc(a.name)}</td>
+      <td>${esc(a.phone)}</td>
+      <td>${esc(a.email||'—')}</td>
+      <td>${esc(a.referral||'direct')}</td>
+      <td>${a.sentLetter?'<span class="tag yes">참여</span>':'<span class="tag no">미참여</span>'}</td>
+      <td>${isDup?'<span class="tag dup">중복</span>':''}</td>
+      <td>${fmtDate(a.createdAt)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+// CSV 내보내기 (엑셀·구글시트에서 바로 열림)
+function exportCSV(){
+  if(!APPLIES.length){ alert('내보낼 데이터가 없어요.'); return; }
+  const phoneCount = {};
+  APPLIES.forEach(a=>{ const k=normPhone(a.phone); if(k) phoneCount[k]=(phoneCount[k]||0)+1; });
+  const head = ['이름','연락처','이메일','유입경로','편지참여','중복','대화ID','응모시각'];
+  const rows = APPLIES.map(a=>{
+    const isDup = normPhone(a.phone) && phoneCount[normPhone(a.phone)]>1;
+    return [ a.name, a.phone, a.email||'', a.referral||'direct',
+             a.sentLetter?'참여':'미참여', isDup?'중복':'', a.convId||'',
+             (()=>{try{return new Date(a.createdAt).toLocaleString('ko-KR');}catch(e){return '';}})() ];
+  });
+  const csv = [head, ...rows].map(r=>r.map(cell=>{
+    const s = String(cell==null?'':cell);
+    return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+  }).join(',')).join('\r\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'}); // BOM: 엑셀 한글 깨짐 방지
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const d = new Date(); const stamp = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  a.href = url; a.download = `momo_응모자_${stamp}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>

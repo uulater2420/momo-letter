@@ -23,13 +23,12 @@
 
 // ── Firebase 설정값 (콘솔에서 복사한 값으로 교체) ─────────────────
 const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyAXxYu3FxeD8v5Il0n8XRbPAzPz6fvNlsU",
-  authDomain: "momo-letter.firebaseapp.com",
-  projectId: "momo-letter",
-  storageBucket: "momo-letter.firebasestorage.app",
-  messagingSenderId: "715586990451",
-  appId: "1:715586990451:web:6779e305d4d83f5dccd506",
-  measurementId: "G-MFWK4LRLLR"
+  apiKey:            "여기에-붙여넣기",
+  authDomain:        "여기에-붙여넣기",
+  projectId:         "여기에-붙여넣기",
+  storageBucket:     "여기에-붙여넣기",
+  messagingSenderId: "여기에-붙여넣기",
+  appId:             "여기에-붙여넣기",
 };
 
 const IS_CONFIGURED = FIREBASE_CONFIG.apiKey !== "여기에-붙여넣기";
@@ -153,19 +152,43 @@ export function watchConversation(cid, callback) {
   return () => clearInterval(timer);
 }
 
-// ── 이벤트 응모 저장 ──────────────────────────────────────────────
-export async function saveApply({ name, phone, email, convId }) {
+// ── (어드민) 응모 전체 불러오기 ───────────────────────────────────
+export async function loadAllApplies() {
   await firebaseReady;
   if (db) {
     try {
-      await _addDoc(_collection(db, 'applies'), {
-        name, phone, email: email || '', convId: convId || '',
-        createdAt: Date.now(),
-      });
+      const q = _query(_collection(db, 'applies'), _orderBy('createdAt', 'desc'));
+      const snap = await _getDocs(q);
+      _lastError = '';
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (e) {
+      _lastError = '응모 조회 실패: ' + e.message;
+      console.warn('[loadAllApplies] 실패:', e.message);
+      throw e;
+    }
+  }
+  return [];
+}
+
+// ── 이벤트 응모 저장 ──────────────────────────────────────────────
+export async function saveApply({ name, phone, email, convId, referral, sentLetter }) {
+  await firebaseReady;
+  const record = {
+    name, phone, email: email || '',
+    convId: convId || '',
+    referral: referral || 'direct',
+    sentLetter: !!sentLetter,
+    createdAt: Date.now(),
+  };
+  if (db) {
+    try {
+      await tmo(_addDoc(_collection(db, 'applies'), record), 8000);
+      _lastError = '';
       return;
     } catch (e) {
+      _lastError = '응모 저장 실패: ' + e.message;
       console.warn('[saveApply] Firebase 실패:', e.message);
     }
   }
-  console.log('[응모 데이터 로컬]', { name, phone, email, convId });
+  console.log('[응모 데이터 로컬]', record);
 }

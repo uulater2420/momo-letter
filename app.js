@@ -306,8 +306,21 @@ function addSticker(emoji) {
 // ══════════════════════════════════════════════════════════════════
 // 편지 캡처
 // ══════════════════════════════════════════════════════════════════
+// 편지지 폰트가 준비될 때까지 대기 (캔버스는 웹폰트 로딩을 안 기다리므로 필수)
+async function ensureLetterFont(){
+  try{
+    if(document.fonts && document.fonts.load){
+      await Promise.all([
+        document.fonts.load('400 20px "Gaegu"'),
+        document.fonts.load('700 12px "Noto Sans KR"'),
+      ]);
+      await document.fonts.ready;
+    }
+  }catch(e){}
+}
+
 function capture() {
-  return new Promise(resolve => {
+  return ensureLetterFont().then(()=> new Promise(resolve => {
     const OW=320, OH=220;
     const out = document.createElement('canvas'); out.width=OW; out.height=OH;
     const ctx = out.getContext('2d');
@@ -324,29 +337,39 @@ function capture() {
     // To.
     if(toName){ctx.fillStyle='#c05848';ctx.font='700 12px "Noto Sans KR",sans-serif';ctx.textBaseline='top';ctx.fillText('To. '+toName,38,5);}
     ctx.strokeStyle='rgba(220,120,100,0.18)';ctx.lineWidth=0.5;ctx.beginPath();ctx.moveTo(0,22);ctx.lineTo(OW,22);ctx.stroke();
-    // 텍스트
-    if(txt){
-      const maxW=OW-48,areaH=OH-56;
-      function wl(sz){ctx.font=`300 ${sz}px "Gaegu",cursive`;const ls=[];txt.split('\n').forEach(p=>{let l='';for(const ch of p){const t=l+ch;if(ctx.measureText(t).width>maxW&&l){ls.push(l);l=ch;}else l=t;}ls.push(l);});return ls;}
-      let fs=15,lines=wl(fs);
-      while((lines.length>6||lines.length*fs*1.75>areaH)&&fs>10){fs-=0.5;lines=wl(fs);}
-      while(lines.length<=3&&lines.length*fs*1.75<areaH*0.6&&fs<18){fs+=0.5;lines=wl(fs);}
-      ctx.fillStyle='#2c2018';ctx.font=`300 ${fs}px "Gaegu",cursive`;ctx.textBaseline='top';
-      const lh=fs*1.75,sy=26+(areaH-lines.slice(0,6).length*lh)/2;
-      lines.slice(0,6).forEach((l,i)=>ctx.fillText(l,40,sy+i*lh));
+
+    // 텍스트 — 미리보기 입력창(.overlay-textarea)과 동일한 배율·정렬로 그려 '보이는 그대로' 유지
+    if(txt.trim()){
+      const wrap=$('composer-preview-wrap');
+      const pw=wrap?.clientWidth||292, ph=wrap?.clientHeight||Math.round(pw*0.68);
+      const k=OW/pw;                       // 미리보기 → 출력 배율
+      const padL=50*k, padR=16*k;
+      const padT=(toName?40:14)*k;         // renderComposer의 입력창 위 여백과 동일
+      const maxW=OW-padL-padR;
+      const ratio=36/22;                   // line-height(36) / font-size(22)
+      const measureWrap=(size)=>{
+        ctx.font=`400 ${size}px "Gaegu",cursive`;
+        const ls=[]; txt.split('\n').forEach(p=>{let l='';for(const ch of p){const t=l+ch;if(ctx.measureText(t).width>maxW&&l){ls.push(l);l=ch;}else l=t;}ls.push(l);});
+        return ls;
+      };
+      let fs=22*k, lines=measureWrap(fs), lh=fs*ratio;
+      while(padT+lines.length*lh > OH-12 && fs>9){ fs-=0.5; lines=measureWrap(fs); lh=fs*ratio; }
+      ctx.fillStyle='#2c2018'; ctx.font=`400 ${fs}px "Gaegu",cursive`; ctx.textBaseline='top';
+      lines.forEach((l,i)=>ctx.fillText(l, padL, padT+i*lh));
     }
+
     // 그림 오버레이 (미리보기와 동일 전체 영역 + 이동 오프셋 반영 → 위치 일치)
     if(S.drawn){
       const dl=$('draw-layer');
       if(dl){
         const W=S.composerW||OW, H=S.composerH||OH;
         const ox=S.drawDX/W*OW, oy=S.drawDY/H*OH;
-        ctx.globalAlpha=txt?0.85:1.0;
+        ctx.globalAlpha=txt.trim()?0.9:1.0;
         ctx.drawImage(dl,ox,oy,OW,OH);
         ctx.globalAlpha=1.0;
       }
     }
-    // 스티커 (미리보기 .placed-sticker: 28px·좌상단 기준과 일치시킴)
+    // 스티커 (미리보기 .placed-sticker: 28px·좌상단 기준과 일치)
     if(S.stickers.length){
       const wrap=$('composer-preview-wrap');
       const pw=wrap?.clientWidth||292,ph=wrap?.clientHeight||198;
@@ -356,7 +379,7 @@ function capture() {
     // From.
     if(fromName){ctx.fillStyle='#c05848';ctx.font='700 11px "Noto Sans KR",sans-serif';const fw=ctx.measureText('From. '+fromName).width;ctx.fillText('From. '+fromName,OW-fw-8,OH-13);}
     const img=new Image();img.onload=()=>resolve(img);img.src=out.toDataURL('image/png');
-  });
+  }));
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -414,11 +437,11 @@ function startSea(canvasId, imgs, fadeIn) {
   let t=0;
   function bg(){
     const g=ctx.createLinearGradient(0,0,0,H);
-    g.addColorStop(0,   '#b0d0e0');
-    g.addColorStop(0.22,'#5a90a8');
-    g.addColorStop(0.50,'#2a6080');
-    g.addColorStop(0.75,'#163850');
-    g.addColorStop(1,   '#0a2030');
+    g.addColorStop(0,   '#bdeaf5');
+    g.addColorStop(0.22,'#7ecbe6');
+    g.addColorStop(0.50,'#3fa3d4');
+    g.addColorStop(0.75,'#2478b8');
+    g.addColorStop(1,   '#15568f');
     ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
     ctx.save();ctx.globalAlpha=0.06;
     for(let i=0;i<7;i++){const rx=((i*167+t*0.2)%W),ry=H*0.48+(i*71)%(H*0.42),rr=18+(i*43)%36;ctx.fillStyle='#081820';ctx.beginPath();ctx.ellipse(rx,ry,rr,rr*0.45,0,0,Math.PI*2);ctx.fill();}
@@ -550,10 +573,7 @@ function paintConvSea(letters){
     if(imgs.length===_seaCount) return; // 변화 없으면 그대로 유지
     _seaCount=imgs.length;
     startSea('sea-canvas', imgs, true);
-    const sub=$('sea-sub');
-    if(sub) sub.textContent = imgs.length<=1
-      ? '🔗 링크를 공유하면 상대도 여기서 답장할 수 있어요'
-      : `편지 ${imgs.length}통 · 편지를 탭하면 펼쳐서 읽을 수 있어요`;
+    // 안내 문구는 setupConvSeaButtons의 고정 문구를 유지
   });
 }
 
@@ -567,10 +587,12 @@ function startConvWatch(){
 
 // 공유 바다 버튼 구성
 function setupConvSeaButtons(){
-  const msg=$('sea-msg'); if(msg) msg.textContent='편지들이 같은 바다에 모이고 있어요 ✦';
-  const r=$('reply-btn'); if(r){ r.textContent='✏️ 편지 쓰기'; r.style.display='block'; }
-  const s=$('share-btn'); if(s){ s.textContent='🔗 함께 볼 링크 공유'; s.style.display='block'; }
-  const a=$('apply-btn'); if(a){ a.textContent='🎟 이벤트 응모하기'; a.style.display='block'; }
+  const msg=$('sea-msg'); if(msg) msg.textContent='바다 위에 편지를 띄워 보냈어요!';
+  const sub=$('sea-sub'); if(sub) sub.textContent='링크를 공유하면 상대방도 편지를 확인하고 답장할 수 있습니다.';
+  // 경품 응모하기 — 가장 잘 보이는 대표 버튼(맨 위)
+  const a=$('apply-btn'); if(a){ a.textContent='🎁 경품 응모하기'; a.style.display='block'; a.style.order='1'; a.className='evbtn prize-apply-btn'; }
+  const s=$('share-btn'); if(s){ s.textContent='🔗 함께 볼 링크 공유'; s.style.display='block'; s.style.order='2'; s.className='evbtn'; }
+  const r=$('reply-btn'); if(r){ r.textContent='✏️ 편지 쓰기'; r.style.display='block'; r.style.order='3'; r.className='ghostbtn'; }
   const n=$('new-btn'); if(n) n.style.display='none';
   const e=$('edit-btn'); if(e) e.style.display='none';
 }
@@ -712,6 +734,19 @@ async function copyLink(){
 // ══════════════════════════════════════════════════════════════════
 // 응모
 // ══════════════════════════════════════════════════════════════════
+// 유입 경로(마케팅 채널) 캡처 — 최초 접속 URL 기준, 세션 동안 유지
+function captureReferral(){
+  try{
+    const p=new URLSearchParams(location.search);
+    let ref = p.get('utm_source') || p.get('ref') || p.get('src') || '';
+    const saved = sessionStorage.getItem('momo_ref');
+    if(!ref && saved) ref = saved;
+    if(!ref) ref = p.get('c') ? 'share' : 'direct';  // 공유 링크 유입 / 직접 유입
+    sessionStorage.setItem('momo_ref', ref);
+  }catch(e){}
+}
+function getReferral(){ try{ return sessionStorage.getItem('momo_ref') || 'direct'; }catch(e){ return 'direct'; } }
+
 async function doApply(){
   const name=$('a-name')?.value.trim()||'';
   const phone=$('a-phone')?.value.trim()||'';
@@ -723,7 +758,10 @@ async function doApply(){
   if(!agree){if(err)err.textContent='개인정보 수집에 동의해 주세요.';return;}
   if(err)err.textContent='';
   showLoading(true,'응모 정보를 저장하는 중…');
-  try{const p1=saveApply({name,phone,email,convId:S.convId||null});await Promise.race([p1,new Promise(r=>setTimeout(r,3000))]);}catch(e){console.warn('응모 저장 실패:',e);}
+  try{
+    const p1=saveApply({name,phone,email,convId:S.convId||null,referral:getReferral(),sentLetter:!!S.convId});
+    await Promise.race([p1,new Promise(r=>setTimeout(r,3000))]);
+  }catch(e){console.warn('응모 저장 실패:',e);}
   showLoading(false);show('s-done');
 }
 
@@ -810,6 +848,7 @@ function bindEvents() {
 // 수신인 랜딩
 // ══════════════════════════════════════════════════════════════════
 async function init() {
+  captureReferral();   // 유입 경로 기록(원래 접속 URL 기준)
   initComposer();
   bindEvents();
   swTab('text');

@@ -549,6 +549,20 @@ body {
   border: 1px solid rgba(255,255,255,0.36);
   color: rgba(255,255,255,0.88);
 }
+/* 경품 응모하기 — 가장 눈에 띄는 대표 버튼 */
+.prize-apply-btn {
+  background: linear-gradient(135deg, #ffd873, #f4a623) !important;
+  color: #5a3a00 !important;
+  font-size: 15px !important; font-weight: 800 !important;
+  padding: 16px !important; letter-spacing: 0.01em;
+  box-shadow: 0 4px 0 #d6890f, 0 7px 20px rgba(244,166,35,0.5) !important;
+  animation: prizePulse 2.4s ease-in-out infinite;
+}
+.prize-apply-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #d6890f, 0 4px 12px rgba(244,166,35,0.5) !important; }
+@keyframes prizePulse {
+  0%, 100% { box-shadow: 0 4px 0 #d6890f, 0 7px 20px rgba(244,166,35,0.45); }
+  50%      { box-shadow: 0 4px 0 #d6890f, 0 7px 26px rgba(244,166,35,0.75); }
+}
 .ghostbtn:active { background: rgba(255,255,255,0.24); }
 
 /* ═══════════════════════════════════════════════════════════
