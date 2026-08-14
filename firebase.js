@@ -39,7 +39,7 @@ const IS_CONFIGURED = FIREBASE_CONFIG.apiKey !== "여기에-붙여넣기";
 //   2. 배포 → 새 배포 → 웹 앱 (실행: 나, 액세스: 모든 사용자) → URL 복사
 //   3. 아래 SHEET_WEBHOOK_URL 에 그 URL 붙여넣기 (SHEET_TOKEN 은 스크립트와 동일하게)
 //   ※ 비워두면 시트 연동은 꺼지고, Firestore·어드민만 동작합니다.
-const SHEET_WEBHOOK_URL = "";                 // 예: https://script.google.com/macros/s/AKfy.../exec
+const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzhwcrpzYc3ktUg6Uh9Lc9RfdCq2rh24LMEvTq5SsA5zjJc7vyXnGn0O1kK2Xb6REXb-Q/exec";                 // 예: https://script.google.com/macros/s/AKfy.../exec
 const SHEET_TOKEN       = "momo-sheet-2026";  // Apps Script 의 TOKEN 과 반드시 동일
 
 export function sheetEnabled(){ return !!SHEET_WEBHOOK_URL; }
