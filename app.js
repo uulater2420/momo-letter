@@ -591,8 +591,8 @@ function setupConvSeaButtons(){
   const sub=$('sea-sub'); if(sub) sub.textContent='링크를 공유하면 상대방도 편지를 확인하고 답장할 수 있습니다.';
   // 경품 응모하기 — 가장 잘 보이는 대표 버튼(맨 위)
   const a=$('apply-btn'); if(a){ a.textContent='🎁 경품 응모하기'; a.style.display='block'; a.style.order='1'; a.className='evbtn prize-apply-btn'; }
-  const s=$('share-btn'); if(s){ s.textContent='🔗 함께 볼 링크 공유'; s.style.display='block'; s.style.order='2'; s.className='evbtn'; }
-  const r=$('reply-btn'); if(r){ r.textContent='✏️ 편지 쓰기'; r.style.display='block'; r.style.order='3'; r.className='ghostbtn'; }
+  const s=$('share-btn'); if(s){ s.textContent='🔗 편지 전하기 (링크 공유)'; s.style.display='block'; s.style.order='2'; s.className='evbtn'; }
+  const r=$('reply-btn'); if(r){ r.textContent='✏️ 편지 새로 쓰기'; r.style.display='block'; r.style.order='3'; r.className='ghostbtn'; }
   const n=$('new-btn'); if(n) n.style.display='none';
   const e=$('edit-btn'); if(e) e.style.display='none';
 }
@@ -661,13 +661,6 @@ function clearComposer(){
 // 현재 대화에 이어서 편지 쓰기 (받는 사람도 같은 함수로 답장)
 function goCompose(){
   clearComposer();
-  const cont = !!S.convId;
-  $('write-title').innerHTML = cont
-    ? '편지를 이어서<br>바다에 띄워 보세요'
-    : '전하지 못한 마음을<br>바다에 띄워 보세요';
-  $('write-sub').textContent = cont
-    ? '같은 바다 위에 두 사람의 편지가 함께 쌓여요.'
-    : '그리운 누군가에게 편지를 써서 바다에 보내보세요.';
   $('send-btn-label').textContent='편지 띄우고 숙박권 이벤트 참여하기';
   $('send-main-btn').style.background='';
   swTab('text');

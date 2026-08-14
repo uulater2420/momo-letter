@@ -116,6 +116,18 @@ body {
   padding: 0 12px;
 }
 
+/* 메인 이벤트명(강조) */
+.event-headline {
+  margin-top: 6px; font-size: 22px; font-weight: 800;
+  color: var(--peach-deep); letter-spacing: -0.01em; line-height: 1.35;
+}
+/* 서브 설명 2 */
+.page-sub2 {
+  margin-top: 2px; text-align: center;
+  font-size: 12px; color: var(--text-muted); font-weight: 400;
+  padding: 0 12px;
+}
+
 /* 이벤트 안내 카피 + 참여 CTA 박스 */
 .event-copy {
   margin-top: 10px; text-align: center;
@@ -549,20 +561,52 @@ body {
   border: 1px solid rgba(255,255,255,0.36);
   color: rgba(255,255,255,0.88);
 }
-/* 경품 응모하기 — 가장 눈에 띄는 대표 버튼 */
+/* 경품 응모하기 — 가장 눈에 띄는 대표 버튼(코랄) */
 .prize-apply-btn {
-  background: linear-gradient(135deg, #ffd873, #f4a623) !important;
-  color: #5a3a00 !important;
+  background: linear-gradient(135deg, #ff9385, #e0563c) !important;
+  color: #fff !important;
   font-size: 15px !important; font-weight: 800 !important;
   padding: 16px !important; letter-spacing: 0.01em;
-  box-shadow: 0 4px 0 #d6890f, 0 7px 20px rgba(244,166,35,0.5) !important;
+  box-shadow: 0 4px 0 #c0402a, 0 7px 20px rgba(224,86,60,0.42) !important;
   animation: prizePulse 2.4s ease-in-out infinite;
 }
-.prize-apply-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #d6890f, 0 4px 12px rgba(244,166,35,0.5) !important; }
+.prize-apply-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #c0402a, 0 4px 12px rgba(224,86,60,0.42) !important; }
 @keyframes prizePulse {
-  0%, 100% { box-shadow: 0 4px 0 #d6890f, 0 7px 20px rgba(244,166,35,0.45); }
-  50%      { box-shadow: 0 4px 0 #d6890f, 0 7px 26px rgba(244,166,35,0.75); }
+  0%, 100% { box-shadow: 0 4px 0 #c0402a, 0 7px 20px rgba(224,86,60,0.40); }
+  50%      { box-shadow: 0 4px 0 #c0402a, 0 7px 26px rgba(224,86,60,0.70); }
 }
+
+/* 응모 화면 안내 문구 */
+.apply-notice {
+  display: inline-block; margin: 10px auto 0;
+  background: rgba(224,120,80,0.12); color: var(--peach-deep);
+  border: 1px solid rgba(224,120,80,0.30); border-radius: 999px;
+  padding: 7px 16px; font-size: 12.5px; font-weight: 700;
+}
+
+/* 완료 화면 스틸컷 + 저작권 */
+.done-still-wrap {
+  position: relative; width: min(340px, 86vw);
+  border-radius: 14px; overflow: hidden; margin-bottom: 4px;
+  box-shadow: 0 8px 26px rgba(0,0,0,0.22);
+}
+.done-still { display: block; width: 100%; height: auto; }
+.done-copy {
+  position: absolute; right: 8px; bottom: 6px;
+  font-size: 9px; color: rgba(255,255,255,0.92); letter-spacing: 0.02em;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+/* 완료 화면 버튼 통일감 */
+.done-btn { width: 100%; max-width: 300px; }
+.done-outline {
+  width: 100%; max-width: 300px;
+  background: #fff; border: 1.5px solid var(--peach-mid);
+  color: var(--peach-deep); border-radius: 40px; padding: 13px;
+  font-size: 14px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer; box-shadow: 0 2px 8px rgba(192,88,72,0.12);
+  transition: transform .15s, background .15s;
+}
+.done-outline:active { transform: translateY(1px); background: #fff4ef; }
 .ghostbtn:active { background: rgba(255,255,255,0.24); }
 
 /* ═══════════════════════════════════════════════════════════
