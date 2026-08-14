@@ -152,6 +152,39 @@ body {
   display: flex; flex-direction: column; gap: 10px;
   max-width: 360px; margin: 0 auto;
 }
+
+/* 대표 경품(숙박권) — 크게 강조 */
+.prize-hero {
+  position: relative;
+  display: flex; align-items: center; gap: 14px;
+  background: linear-gradient(135deg, #fff4e6 0%, #ffe3d0 55%, #ffd0b8 100%);
+  border: 1.5px solid #f0a878;
+  border-radius: 18px; padding: 20px 16px 16px;
+  box-shadow: 0 6px 22px rgba(224,120,80,0.24);
+  margin-bottom: 12px; overflow: hidden;
+}
+.hero-ribbon {
+  position: absolute; top: 0; left: 0;
+  background: linear-gradient(135deg, #ff8a5c, #e0563c);
+  color: #fff; font-size: 11px; font-weight: 800;
+  padding: 5px 14px 6px 12px; border-radius: 0 0 12px 0;
+  box-shadow: 0 2px 6px rgba(200,70,40,0.3); letter-spacing: 0.03em;
+}
+.prize-hero-img {
+  width: 106px; height: 106px; object-fit: contain; flex-shrink: 0;
+  filter: drop-shadow(0 3px 9px rgba(0,0,0,0.20)); margin-top: 8px;
+}
+.prize-hero-info { flex: 1; min-width: 0; margin-top: 8px; }
+.prize-hero-tag { font-size: 12.5px; font-weight: 700; color: #a85838; }
+.prize-hero-amt {
+  font-size: 24px; font-weight: 900; color: #d0442a; line-height: 1.1;
+  margin: 3px 0 9px; font-family: 'Noto Sans KR', sans-serif;
+}
+.prize-hero-count {
+  display: inline-block; background: #c0402a; color: #fff;
+  font-size: 12.5px; font-weight: 800; border-radius: 999px;
+  padding: 6px 15px; box-shadow: 0 2px 6px rgba(160,50,30,0.28);
+}
 .prize-item {
   display: flex; align-items: center; gap: 12px;
   background: rgba(255,255,255,0.72);
