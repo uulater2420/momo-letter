@@ -591,7 +591,7 @@ function setupConvSeaButtons(){
   const sub=$('sea-sub'); if(sub) sub.textContent='링크를 공유하면 상대방도 편지를 확인하고 답장할 수 있습니다.';
   // 경품 응모하기 — 가장 잘 보이는 대표 버튼(맨 위)
   const a=$('apply-btn'); if(a){ a.textContent='🎁 경품 응모하기'; a.style.display='block'; a.style.order='1'; a.className='evbtn prize-apply-btn'; }
-  const s=$('share-btn'); if(s){ s.textContent='🔗 편지 전하기 (링크 공유)'; s.style.display='block'; s.style.order='2'; s.className='evbtn'; }
+  const s=$('share-btn'); if(s){ s.textContent='🔗 편지 전하기'; s.style.display='block'; s.style.order='2'; s.className='evbtn'; }
   const r=$('reply-btn'); if(r){ r.textContent='✏️ 편지 새로 쓰기'; r.style.display='block'; r.style.order='3'; r.className='ghostbtn'; }
   const n=$('new-btn'); if(n) n.style.display='none';
   const e=$('edit-btn'); if(e) e.style.display='none';

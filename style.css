@@ -592,6 +592,15 @@ body {
 }
 
 /* 완료 화면 스틸컷 + 저작권 */
+.done-title {
+  font-size: 25px; color: var(--peach-deep); margin-top: 2px;
+  text-shadow: 0 1px 3px rgba(255,255,255,0.7);
+}
+.done-msg {
+  font-size: 15px; font-weight: 600; color: var(--ink);
+  line-height: 1.75; text-align: center; margin-top: 2px;
+  text-shadow: 0 1px 2px rgba(255,255,255,0.75);
+}
 .done-still-wrap {
   position: relative; width: min(340px, 86vw);
   border-radius: 14px; overflow: hidden; margin-bottom: 4px;
