@@ -628,6 +628,12 @@ body {
   line-height: 1.75; text-align: center; margin-top: 2px;
   text-shadow: 0 1px 2px rgba(255,255,255,0.75);
 }
+.done-announce {
+  margin-top: 6px; text-align: center;
+  font-size: 12.5px; font-weight: 600; color: var(--peach-deep);
+  line-height: 1.65;
+  text-shadow: 0 1px 2px rgba(255,255,255,0.75);
+}
 .done-still-wrap {
   position: relative; width: min(340px, 86vw);
   border-radius: 14px; overflow: hidden; margin-bottom: 4px;
