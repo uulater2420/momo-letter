@@ -119,23 +119,23 @@ body {
 /* 메인 이벤트명 (박스 없이 타이포로 강조) */
 .event-headline {
   margin: 20px 0 0; text-align: center;
-  font-family: 'Jua', 'Noto Sans KR', sans-serif;
-  font-size: 34px; font-weight: 400; line-height: 1.32; letter-spacing: 0.01em;
+  font-family: 'Do Hyeon', 'Noto Sans KR', sans-serif;
+  font-size: 34px; font-weight: 400; line-height: 0.92; letter-spacing: 0.01em;
   color: #10697f;
   text-shadow: 0 1px 3px rgba(255,255,255,0.75);
 }
 /* 제목과 설명을 나누는 물결 구분선 */
 .headline-wave { display: block; width: 112px; height: 8px; margin: 14px auto 18px; opacity: 0.85; }
 
-/* 영화 개봉일 (로고 아래) */
+/* 영화 개봉일 (로고 아래) — 행간 축소 */
 .release-date {
-  margin-top: 4px; text-align: center;
+  margin-top: 1px; text-align: center; line-height: 1.2;
   font-size: 12.5px; font-weight: 700; color: #10697f; letter-spacing: 0.01em;
 }
-/* 이벤트 기간 */
+/* 이벤트 기간 (검정) */
 .event-period {
-  margin-top: 8px; text-align: center;
-  font-size: 12px; font-weight: 600; color: var(--text-mid);
+  margin: 8px 0 18px; text-align: center;
+  font-size: 12px; font-weight: 600; color: #1a1a1a;
   text-shadow: 0 1px 2px rgba(255,255,255,0.7);
 }
 /* 각 페이지 작은 로고 */
