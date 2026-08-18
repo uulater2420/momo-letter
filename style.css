@@ -121,11 +121,11 @@ body {
   margin: 20px 0 0; text-align: center;
   font-family: 'Do Hyeon', 'Noto Sans KR', sans-serif;
   font-size: 34px; font-weight: 400; line-height: 0.92; letter-spacing: 0.01em;
-  color: #10697f;
+  color: #1a1a1a;
   text-shadow: 0 1px 3px rgba(255,255,255,0.75);
 }
 /* 제목과 설명을 나누는 물결 구분선 */
-.headline-wave { display: block; width: 112px; height: 8px; margin: 14px auto 18px; opacity: 0.85; }
+.headline-wave { display: block; width: 56px; height: 8px; margin: 14px auto 18px; opacity: 0.7; }
 
 /* 영화 개봉일 (로고 아래) — 행간 축소 */
 .release-date {
