@@ -331,12 +331,14 @@ function capture() {
     // 종이
     ctx.fillStyle='#fefcf4'; ctx.fillRect(0,0,OW,OH);
     ctx.strokeStyle='rgba(160,130,90,0.18)'; ctx.lineWidth=0.6;
-    for(let y=36;y<OH;y+=22){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(OW,y);ctx.stroke();}
+    for(let y=46;y<OH-26;y+=22){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(OW,y);ctx.stroke();}
     ctx.strokeStyle='rgba(220,120,100,0.26)'; ctx.lineWidth=0.7;
     ctx.beginPath();ctx.moveTo(32,0);ctx.lineTo(32,OH);ctx.stroke();
-    // To.
-    if(toName){ctx.fillStyle='#c05848';ctx.font='700 12px "Noto Sans KR",sans-serif';ctx.textBaseline='top';ctx.fillText('To. '+toName,38,5);}
-    ctx.strokeStyle='rgba(220,120,100,0.18)';ctx.lineWidth=0.5;ctx.beginPath();ctx.moveTo(0,22);ctx.lineTo(OW,22);ctx.stroke();
+    // To. (위 여백 확보)
+    if(toName){
+      ctx.fillStyle='#c05848';ctx.font='700 12px "Noto Sans KR",sans-serif';ctx.textBaseline='top';ctx.fillText('To. '+toName,38,15);
+      ctx.strokeStyle='rgba(220,120,100,0.18)';ctx.lineWidth=0.5;ctx.beginPath();ctx.moveTo(0,33);ctx.lineTo(OW,33);ctx.stroke();
+    }
 
     // 텍스트 — 미리보기 입력창(.overlay-textarea)과 동일한 배율·정렬로 그려 '보이는 그대로' 유지
     if(txt.trim()){
@@ -353,7 +355,7 @@ function capture() {
         return ls;
       };
       let fs=22*k, lines=measureWrap(fs), lh=fs*ratio;
-      while(padT+lines.length*lh > OH-12 && fs>9){ fs-=0.5; lines=measureWrap(fs); lh=fs*ratio; }
+      while(padT+lines.length*lh > OH-28 && fs>9){ fs-=0.5; lines=measureWrap(fs); lh=fs*ratio; }
       ctx.fillStyle='#2c2018'; ctx.font=`400 ${fs}px "Gaegu",cursive`; ctx.textBaseline='top';
       lines.forEach((l,i)=>ctx.fillText(l, padL, padT+i*lh));
     }
@@ -377,7 +379,7 @@ function capture() {
       S.stickers.forEach(st=>{const sz=Math.round(OW/pw*28);ctx.font=sz+'px serif';ctx.fillText(st.emoji,(st.x/pw)*OW,(st.y/ph)*OH);});
     }
     // From.
-    if(fromName){ctx.fillStyle='#c05848';ctx.font='700 11px "Noto Sans KR",sans-serif';const fw=ctx.measureText('From. '+fromName).width;ctx.fillText('From. '+fromName,OW-fw-8,OH-13);}
+    if(fromName){ctx.fillStyle='#c05848';ctx.font='700 11px "Noto Sans KR",sans-serif';const fw=ctx.measureText('From. '+fromName).width;ctx.fillText('From. '+fromName,OW-fw-12,OH-24);}
     const img=new Image();img.onload=()=>resolve(img);img.src=out.toDataURL('image/png');
   }));
 }
