@@ -126,6 +126,29 @@ body {
 }
 /* 제목과 설명을 나누는 물결 구분선 */
 .headline-wave { display: block; width: 112px; height: 8px; margin: 14px auto 18px; opacity: 0.85; }
+
+/* 영화 개봉일 (로고 아래) */
+.release-date {
+  margin-top: 4px; text-align: center;
+  font-size: 12.5px; font-weight: 700; color: #10697f; letter-spacing: 0.01em;
+}
+/* 이벤트 기간 */
+.event-period {
+  margin-top: 8px; text-align: center;
+  font-size: 12px; font-weight: 600; color: var(--text-mid);
+  text-shadow: 0 1px 2px rgba(255,255,255,0.7);
+}
+/* 각 페이지 작은 로고 */
+.page-logo {
+  display: block; width: 96px; height: auto; object-fit: contain; margin: 0 auto;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.14));
+}
+.sea-logo {
+  position: absolute; top: calc(env(safe-area-inset-top, 0px) + 12px);
+  left: 50%; transform: translateX(-50%);
+  width: 84px; z-index: 15;
+  filter: drop-shadow(0 2px 7px rgba(0,0,0,0.4));
+}
 /* 서브 설명 1 (리드) */
 .event-lead {
   font-size: 13.5px !important; font-weight: 500 !important;

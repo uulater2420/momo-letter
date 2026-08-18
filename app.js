@@ -842,6 +842,9 @@ function bindEvents() {
 // ══════════════════════════════════════════════════════════════════
 async function init() {
   captureReferral();   // 유입 경로 기록(원래 접속 URL 기준)
+  // 각 페이지의 작은 로고에 로고 이미지 재사용(용량 절약: 한 번만 인라인)
+  const _logoSrc = $('film-logo')?.getAttribute('src');
+  if (_logoSrc) document.querySelectorAll('.page-logo').forEach(el => el.setAttribute('src', _logoSrc));
   initComposer();
   bindEvents();
   swTab('text');
