@@ -126,7 +126,7 @@ body {
 }
 /* 메인 이벤트명 이미지 */
 .event-title-img {
-  display: block; width: min(340px, 86vw); height: auto; margin: 18px auto 0;
+  display: block; width: min(315px, 86vw); height: auto; margin: 18px auto 0;
   filter: drop-shadow(0 2px 5px rgba(70,100,130,0.28));
 }
 /* 제목과 설명을 나누는 물결 구분선 */
