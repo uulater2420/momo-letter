@@ -190,6 +190,16 @@ export async function loadAllConversations() {
   return [];
 }
 
+// (어드민) 대화 통계 직접 설정 — 과거 데이터 보정용 (shareCount는 건드리지 않음)
+export async function setConversationStats(cid, stats) {
+  await firebaseReady;
+  if (db) {
+    try { await tmo(_updateDoc(_doc(db, 'conversations', cid), stats), 8000); return true; }
+    catch (e) { console.warn('[setConversationStats] 실패:', e.message); return false; }
+  }
+  return false;
+}
+
 // ── 대화 불러오기 (편지 전체, 시간순) ─────────────────────────────
 export async function loadConversation(cid) {
   await firebaseReady;

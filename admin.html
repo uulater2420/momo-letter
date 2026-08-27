@@ -96,6 +96,7 @@
   <div class="panel">
     <h2>편지 교환·공유 현황
       <button class="btn" id="conv-load-btn" style="font-size:12px;padding:5px 11px;margin-left:8px">불러오기</button>
+      <button class="btn" id="conv-backfill-btn" style="font-size:12px;padding:5px 11px;margin-left:4px">과거 데이터 보정 (8/24~)</button>
     </h2>
     <div id="conv-stats"><p class="note">‘불러오기’를 누르면 편지 교환/공유 통계를 계산합니다. (대화 데이터를 조회하므로 응모 목록과 별도로 실행됩니다.)</p></div>
   </div>
@@ -129,7 +130,7 @@
 const ADMIN_PASSWORD = "momo2026!";
 // ─────────────────────────────────────────────────────────────
 
-import { loadAllApplies, loadAllConversations, getStatus, syncAllToSheet, sheetEnabled } from './firebase.js';
+import { loadAllApplies, loadAllConversations, loadConversation, setConversationStats, getStatus, syncAllToSheet, sheetEnabled } from './firebase.js';
 
 const $ = id => document.getElementById(id);
 let APPLIES = [];
@@ -177,6 +178,36 @@ async function openDash(){
 $('refresh-btn').addEventListener('click', refresh);
 $('csv-btn').addEventListener('click', exportCSV);
 $('conv-load-btn').addEventListener('click', loadConvStats);
+$('conv-backfill-btn').addEventListener('click', runBackfill);
+
+// 이벤트 시작(2026-08-24 00:00 KST) 이후 대화의 편지를 스캔해 통계 채우기
+const EVENT_START = new Date('2026-08-24T00:00:00+09:00').getTime();
+async function runBackfill(){
+  if(!confirm('8/24 이후 대화의 편지를 스캔해 왕복·작성자 통계를 채웁니다.\n(공유 횟수는 기록이 없어 복원되지 않아요.)\n대화가 많으면 시간이 걸릴 수 있어요. 진행할까요?')) return;
+  const btn=$('conv-backfill-btn'); btn.disabled=true;
+  try{
+    const st = await getStatus();
+    if(!st.connected){ alert('Firebase 미연결 상태예요.'); btn.disabled=false; btn.textContent='과거 데이터 보정 (8/24~)'; return; }
+    const convs = await loadAllConversations();
+    const targets = convs.filter(c => (c.createdAt||0) >= EVENT_START);
+    let done=0;
+    for(const c of targets){
+      btn.textContent = `보정 중… ${done}/${targets.length}`;
+      try{
+        const conv = await loadConversation(c.id);
+        const letters = (conv && conv.letters) || [];
+        // 작성자: 새 데이터는 익명 ID(by), 과거 데이터는 'From. 이름' 기준 추정
+        const authors = [...new Set(letters.map(l => l.by || (l.from ? 'name:'+l.from : '')).filter(Boolean))];
+        const lastAt = letters.reduce((m,l)=>Math.max(m, l.at||0), c.createdAt||0);
+        await setConversationStats(c.id, { letterCount: letters.length, authors, lastAt });
+      }catch(e){ /* 한 건 실패는 건너뜀 */ }
+      done++;
+    }
+    alert(`보정 완료: ${done}건. 통계를 다시 불러옵니다.`);
+    await loadConvStats();
+  }catch(e){ alert('보정 실패: ' + (e.message||String(e))); }
+  btn.disabled=false; btn.textContent='과거 데이터 보정 (8/24~)';
+}
 
 async function loadConvStats(){
   const btn=$('conv-load-btn'); const prev=btn.textContent; btn.textContent='불러오는 중…'; btn.disabled=true;
