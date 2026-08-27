@@ -1,5 +1,5 @@
 // ── app.js ────────────────────────────────────────────────────────
-import { createConversation, addLetter, loadConversation, watchConversation, saveApply, getStatus } from './firebase.js';
+import { createConversation, addLetter, loadConversation, watchConversation, saveApply, getStatus, incrementShare } from './firebase.js';
 
 // ══════════════════════════════════════════════════════════════════
 // 상태
@@ -622,7 +622,7 @@ async function doSend() {
   S.savedFrom = $('from-input')?.value || '';
   showLoading(true, '편지를 봉투에 담는 중…');
   const img = await capture();
-  const letter = { img: img.src, at: Date.now(), from: S.savedFrom };
+  const letter = { img: img.src, at: Date.now(), from: S.savedFrom, by: getUid() };
 
   try {
     if (!S.convId) {
@@ -684,6 +684,7 @@ function goNewConversation(){
 // ══════════════════════════════════════════════════════════════════
 async function goShare() {
   const url = S.shareUrl || location.href;
+  if (S.convId) { try { incrementShare(S.convId); } catch(e){} }  // 공유 횟수 집계
   if (navigator.share) {
     try {
       await navigator.share({
@@ -733,14 +734,29 @@ async function copyLink(){
 function captureReferral(){
   try{
     const p=new URLSearchParams(location.search);
-    let ref = p.get('utm_source') || p.get('ref') || p.get('src') || '';
-    const saved = sessionStorage.getItem('momo_ref');
-    if(!ref && saved) ref = saved;
-    if(!ref) ref = p.get('c') ? 'share' : 'direct';  // 공유 링크 유입 / 직접 유입
-    sessionStorage.setItem('momo_ref', ref);
+    // 최초 접속 때 한 번만 기록(이후 페이지 이동에도 유지)
+    if(!sessionStorage.getItem('momo_ref_set')){
+      let src = p.get('utm_source') || p.get('ref') || p.get('src') || '';
+      if(!src) src = p.get('c') ? 'share' : 'direct';   // 공유 링크 유입 / 직접 유입
+      sessionStorage.setItem('momo_ref', src);
+      sessionStorage.setItem('momo_ref_medium',   p.get('utm_medium')   || '');
+      sessionStorage.setItem('momo_ref_campaign', p.get('utm_campaign') || '');
+      sessionStorage.setItem('momo_ref_set', '1');
+    }
   }catch(e){}
 }
 function getReferral(){ try{ return sessionStorage.getItem('momo_ref') || 'direct'; }catch(e){ return 'direct'; } }
+function getReferralMedium(){ try{ return sessionStorage.getItem('momo_ref_medium') || ''; }catch(e){ return ''; } }
+function getReferralCampaign(){ try{ return sessionStorage.getItem('momo_ref_campaign') || ''; }catch(e){ return ''; } }
+
+// 익명 작성자 ID (브라우저별, 편지 왕복/실참여 판별용 — 개인정보 아님)
+function getUid(){
+  try{
+    let u = localStorage.getItem('momo_uid');
+    if(!u){ u = 'u_' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); localStorage.setItem('momo_uid', u); }
+    return u;
+  }catch(e){ return ''; }
+}
 
 async function doApply(){
   const name=$('a-name')?.value.trim()||'';
@@ -754,7 +770,7 @@ async function doApply(){
   if(err)err.textContent='';
   showLoading(true,'응모 정보를 저장하는 중…');
   try{
-    const p1=saveApply({name,phone,email,convId:S.convId||null,referral:getReferral(),sentLetter:!!S.convId});
+    const p1=saveApply({name,phone,email,convId:S.convId||null,referral:getReferral(),refMedium:getReferralMedium(),refCampaign:getReferralCampaign(),sentLetter:!!S.convId});
     await Promise.race([p1,new Promise(r=>setTimeout(r,3000))]);
   }catch(e){console.warn('응모 저장 실패:',e);}
   showLoading(false);show('s-done');

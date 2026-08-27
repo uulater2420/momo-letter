@@ -94,6 +94,13 @@
   <div class="cards" id="cards"></div>
 
   <div class="panel">
+    <h2>편지 교환·공유 현황
+      <button class="btn" id="conv-load-btn" style="font-size:12px;padding:5px 11px;margin-left:8px">불러오기</button>
+    </h2>
+    <div id="conv-stats"><p class="note">‘불러오기’를 누르면 편지 교환/공유 통계를 계산합니다. (대화 데이터를 조회하므로 응모 목록과 별도로 실행됩니다.)</p></div>
+  </div>
+
+  <div class="panel">
     <h2>유입 경로별 분포</h2>
     <div id="ref-list"></div>
   </div>
@@ -104,7 +111,7 @@
       <table id="tbl">
         <thead><tr>
           <th>#</th><th>이름</th><th>연락처</th><th>이메일</th>
-          <th>유입경로</th><th>편지참여</th><th>중복</th><th>응모시각</th>
+          <th>유입경로</th><th>상세(매체·캠페인)</th><th>편지참여</th><th>중복</th><th>응모시각</th>
         </tr></thead>
         <tbody id="tbody"></tbody>
       </table>
@@ -119,13 +126,33 @@
 // ─────────────────────────────────────────────────────────────
 //  ⚙️ 관리자 비밀번호 — 아래 값을 원하는 비밀번호로 바꾸세요.
 //     (주의: 클라이언트 측 잠금이라 소스를 보면 노출됩니다. 임시 방편입니다.)
-const ADMIN_PASSWORD = "lbmomo2026!";
+const ADMIN_PASSWORD = "momo2026!";
 // ─────────────────────────────────────────────────────────────
 
-import { loadAllApplies, getStatus, syncAllToSheet, sheetEnabled } from './firebase.js';
+import { loadAllApplies, loadAllConversations, getStatus, syncAllToSheet, sheetEnabled } from './firebase.js';
 
 const $ = id => document.getElementById(id);
 let APPLIES = [];
+
+// ── 유입경로(utm_source) → 읽기 쉬운 채널명 매핑 ──────────────────
+//    각 채널에 뿌리는 링크에 ?utm_source=코드 를 붙이면 여기서 이름으로 표시됩니다.
+//    새 채널을 추가하려면 아래에 '코드':'표시이름' 형태로 넣으세요.
+const REF_LABELS = {
+  'direct':    '직접 유입',
+  'share':     '공유 링크(지인)',
+  'cgv':       'CGV 홈페이지',
+  'hub':       '영화 허브페이지',
+  'gallery':   '외부 갤러리',
+  'instagram': '인스타그램',
+  'facebook':  '페이스북',
+  'x':         'X(트위터)',
+  'kakao':     '카카오',
+  'naver':     '네이버',
+  'youtube':   '유튜브',
+  'blog':      '블로그',
+  'newsletter':'뉴스레터',
+};
+const refLabel = code => REF_LABELS[(code||'direct').toLowerCase()] || (code || 'direct');
 
 // 비밀번호 게이트
 function tryLogin(){
@@ -149,6 +176,63 @@ async function openDash(){
 
 $('refresh-btn').addEventListener('click', refresh);
 $('csv-btn').addEventListener('click', exportCSV);
+$('conv-load-btn').addEventListener('click', loadConvStats);
+
+async function loadConvStats(){
+  const btn=$('conv-load-btn'); const prev=btn.textContent; btn.textContent='불러오는 중…'; btn.disabled=true;
+  try{
+    const st = await getStatus();
+    if(!st.connected){ $('conv-stats').innerHTML='<p class="note" style="color:#c0392b">Firebase 미연결 상태예요.</p>'; }
+    else { renderConvStats(await loadAllConversations()); }
+  }catch(e){
+    $('conv-stats').innerHTML='<p class="note" style="color:#c0392b">불러오기 실패: '+esc(e.message||String(e))+'</p>';
+  }
+  btn.textContent='새로고침'; btn.disabled=false;
+}
+
+function renderConvStats(convs){
+  const total = convs.length;
+  const twoWay = convs.filter(c=> (c.authors||[]).length >= 2 ).length;       // 상호 교환(왕복) 대화
+  const totalShares = convs.reduce((a,c)=> a + (c.shareCount||0), 0);           // 총 공유 횟수
+  const totalLetters = convs.reduce((a,c)=> a + (c.letterCount||0), 0);
+  const avgLetters = total ? (totalLetters/total) : 0;
+  const twoWayRate = total ? Math.round(twoWay/total*100) : 0;
+
+  // 실 참여자(고유 작성자) — 상호 교환에 참여한 사람
+  const allAuthors = new Set(), realAuthors = new Set();
+  convs.forEach(c=>{
+    const a = c.authors||[];
+    a.forEach(x=>allAuthors.add(x));
+    if(a.length>=2) a.forEach(x=>realAuthors.add(x));
+  });
+
+  // 왕복(대화당 편지 수) 분포
+  const dist = {'1':0,'2':0,'3':0,'4+':0};
+  convs.forEach(c=>{ const n=c.letterCount||0; if(n<=1)dist['1']++; else if(n===2)dist['2']++; else if(n===3)dist['3']++; else dist['4+']++; });
+  const maxD = Math.max(1, ...Object.values(dist));
+  const distLabels = {'1':'1통 (답장 없음)','2':'2통 (1왕복)','3':'3통','4+':'4통 이상'};
+
+  $('conv-stats').innerHTML = `
+    <div class="cards" style="margin-bottom:14px">
+      <div class="stat"><div class="label">편지 시작 대화</div><div class="num">${total}<small> 건</small></div></div>
+      <div class="stat"><div class="label">상호 교환(왕복) 대화</div><div class="num">${twoWay}<small> 건 · ${twoWayRate}%</small></div></div>
+      <div class="stat"><div class="label">실 참여자 (상호 교환)</div><div class="num">${realAuthors.size}<small> 명</small></div></div>
+      <div class="stat"><div class="label">편지 쓴 사람(전체)</div><div class="num">${allAuthors.size}<small> 명</small></div></div>
+      <div class="stat"><div class="label">총 공유 횟수</div><div class="num">${totalShares}<small> 회</small></div></div>
+      <div class="stat"><div class="label">대화당 평균 편지</div><div class="num">${avgLetters.toFixed(1)}<small> 통</small></div></div>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px">왕복 정도(대화당 편지 수) 분포</div>
+    ${Object.keys(dist).map(k=>`
+      <div class="ref-row">
+        <div class="ref-name">${distLabels[k]}</div>
+        <div class="ref-bar"><span style="width:${Math.round(dist[k]/maxD*100)}%"></span></div>
+        <div class="ref-val">${dist[k]}건</div>
+      </div>`).join('')}
+    <p class="note">· <b>상호 교환(왕복)</b>은 서로 다른 사람 2명 이상이 편지를 남긴 대화예요(= 실제로 공유·상호확인된 참여).<br>
+    · <b>실 참여자</b>는 그 상호 교환에 참여한 고유 인원(브라우저 기준)입니다. <b>총 공유 횟수</b>는 "편지 전하기"를 누른 총 횟수예요.<br>
+    · 작성자 식별은 개인정보 없이 익명 ID(브라우저)로 이뤄지며, 이번 업데이트 이후 생성된 대화부터 정확히 집계됩니다.</p>
+  `;
+}
 $('sync-btn').addEventListener('click', async ()=>{
   if(!sheetEnabled()){
     alert('아직 시트 연동이 설정되지 않았어요.\nfirebase.js 의 SHEET_WEBHOOK_URL 에 Apps Script 웹앱 주소를 넣어주세요.');
@@ -208,14 +292,14 @@ function render(){
     <div class="stat"><div class="label">편지 참여 후 응모</div><div class="num">${sentCnt}<small> 건 · ${sentRate}%</small></div></div>
   `;
 
-  // 유입 경로 분포
+  // 유입 경로 분포 (읽기 쉬운 채널명 + 코드)
   const ref = {};
   APPLIES.forEach(a=>{ const r=a.referral||'direct'; ref[r]=(ref[r]||0)+1; });
   const refEntries = Object.entries(ref).sort((a,b)=>b[1]-a[1]);
   const maxRef = refEntries.length ? refEntries[0][1] : 1;
-  $('ref-list').innerHTML = refEntries.length ? refEntries.map(([name,cnt])=>`
+  $('ref-list').innerHTML = refEntries.length ? refEntries.map(([code,cnt])=>`
     <div class="ref-row">
-      <div class="ref-name">${esc(name)}</div>
+      <div class="ref-name">${esc(refLabel(code))}<span style="color:#b9ab99;font-weight:400"> ${code!=='direct'&&code!=='share'?'('+esc(code)+')':''}</span></div>
       <div class="ref-bar"><span style="width:${Math.round(cnt/maxRef*100)}%"></span></div>
       <div class="ref-val">${cnt}건 (${total?Math.round(cnt/total*100):0}%)</div>
     </div>`).join('') : '<div class="empty">데이터 없음</div>';
@@ -231,7 +315,8 @@ function render(){
       <td>${esc(a.name)}</td>
       <td>${esc(a.phone)}</td>
       <td>${esc(a.email||'—')}</td>
-      <td>${esc(a.referral||'direct')}</td>
+      <td>${esc(refLabel(a.referral))}<br><span style="color:#b9ab99;font-size:11px">${esc(a.referral||'direct')}</span></td>
+      <td style="color:#8a7a68">${esc([a.refMedium,a.refCampaign].filter(Boolean).join(' / ')||'—')}</td>
       <td>${a.sentLetter?'<span class="tag yes">참여</span>':'<span class="tag no">미참여</span>'}</td>
       <td>${isDup?'<span class="tag dup">중복</span>':''}</td>
       <td>${fmtDate(a.createdAt)}</td>
@@ -246,10 +331,11 @@ function exportCSV(){
   if(!APPLIES.length){ alert('내보낼 데이터가 없어요.'); return; }
   const phoneCount = {};
   APPLIES.forEach(a=>{ const k=normPhone(a.phone); if(k) phoneCount[k]=(phoneCount[k]||0)+1; });
-  const head = ['이름','연락처','이메일','유입경로','편지참여','중복','대화ID','응모시각'];
+  const head = ['이름','연락처','이메일','유입채널','유입코드','매체','캠페인','편지참여','중복','대화ID','응모시각'];
   const rows = APPLIES.map(a=>{
     const isDup = normPhone(a.phone) && phoneCount[normPhone(a.phone)]>1;
-    return [ a.name, a.phone, a.email||'', a.referral||'direct',
+    return [ a.name, a.phone, a.email||'', refLabel(a.referral), a.referral||'direct',
+             a.refMedium||'', a.refCampaign||'',
              a.sentLetter?'참여':'미참여', isDup?'중복':'', a.convId||'',
              (()=>{try{return new Date(a.createdAt).toLocaleString('ko-KR');}catch(e){return '';}})() ];
   });

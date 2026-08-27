@@ -39,7 +39,7 @@ const IS_CONFIGURED = FIREBASE_CONFIG.apiKey !== "여기에-붙여넣기";
 //   2. 배포 → 새 배포 → 웹 앱 (실행: 나, 액세스: 모든 사용자) → URL 복사
 //   3. 아래 SHEET_WEBHOOK_URL 에 그 URL 붙여넣기 (SHEET_TOKEN 은 스크립트와 동일하게)
 //   ※ 비워두면 시트 연동은 꺼지고, Firestore·어드민만 동작합니다.
-const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzhwcrpzYc3ktUg6Uh9Lc9RfdCq2rh24LMEvTq5SsA5zjJc7vyXnGn0O1kK2Xb6REXb-Q/exec";                 // 예: https://script.google.com/macros/s/AKfy.../exec
+const SHEET_WEBHOOK_URL = "";                 // 예: https://script.google.com/macros/s/AKfy.../exec
 const SHEET_TOKEN       = "momo-sheet-2026";  // Apps Script 의 TOKEN 과 반드시 동일
 
 export function sheetEnabled(){ return !!SHEET_WEBHOOK_URL; }
@@ -74,7 +74,7 @@ const LOCAL_STORE = {};
 
 // ── Firebase 모듈 (연결된 경우만 로드) ───────────────────────────
 let db = null;
-let _doc, _setDoc, _collection, _addDoc, _getDocs, _query, _orderBy, _onSnapshot;
+let _doc, _setDoc, _collection, _addDoc, _getDocs, _query, _orderBy, _onSnapshot, _updateDoc, _increment, _arrayUnion;
 
 async function initFirebase() {
   if (!IS_CONFIGURED) {
@@ -87,6 +87,7 @@ async function initFirebase() {
     _doc = fs.doc; _setDoc = fs.setDoc; _collection = fs.collection;
     _addDoc = fs.addDoc; _getDocs = fs.getDocs;
     _query = fs.query; _orderBy = fs.orderBy; _onSnapshot = fs.onSnapshot;
+    _updateDoc = fs.updateDoc; _increment = fs.increment; _arrayUnion = fs.arrayUnion;
     const app = initializeApp(FIREBASE_CONFIG);
     db = fs.getFirestore(app);
     console.log('[Firebase] 연결 성공');
@@ -101,7 +102,7 @@ async function initFirebase() {
 const firebaseReady = initFirebase();
 
 function makeId() { return 'momo_' + Math.random().toString(36).slice(2, 9); }
-function sanitize(l) { return { img: l.img, at: l.at || Date.now(), from: l.from || '' }; }
+function sanitize(l) { return { img: l.img, at: l.at || Date.now(), from: l.from || '', by: l.by || '' }; }
 
 // ── 진단용 상태 ──────────────────────────────────────────────────
 let _lastError = '';
@@ -117,11 +118,16 @@ export async function getStatus(){
 export async function createConversation(firstLetter) {
   const cid = makeId();
   await firebaseReady;
+  const l = sanitize(firstLetter);
   if (db) {
     try {
       await tmo((async () => {
-        await _setDoc(_doc(db, 'conversations', cid), { createdAt: Date.now() });
-        await _addDoc(_collection(db, 'conversations', cid, 'letters'), sanitize(firstLetter));
+        await _setDoc(_doc(db, 'conversations', cid), {
+          createdAt: Date.now(), lastAt: l.at,
+          letterCount: 1, shareCount: 0,
+          authors: l.by ? [l.by] : [],
+        });
+        await _addDoc(_collection(db, 'conversations', cid, 'letters'), l);
       })(), 8000);
       _lastError = '';
       return cid;
@@ -130,16 +136,22 @@ export async function createConversation(firstLetter) {
       console.warn('[createConversation] Firebase 실패, 로컬 저장:', e.message);
     }
   }
-  LOCAL_STORE[cid] = { letters: [sanitize(firstLetter)] };
+  LOCAL_STORE[cid] = { letters: [l] };
   return cid;
 }
 
 // ── 편지 추가 (기존 대화에 이어 붙이기) ───────────────────────────
 export async function addLetter(cid, letter) {
   await firebaseReady;
+  const l = sanitize(letter);
   if (db) {
     try {
-      await tmo(_addDoc(_collection(db, 'conversations', cid, 'letters'), sanitize(letter)), 8000);
+      await tmo((async () => {
+        await _addDoc(_collection(db, 'conversations', cid, 'letters'), l);
+        const patch = { letterCount: _increment(1), lastAt: l.at };
+        if (l.by) patch.authors = _arrayUnion(l.by);
+        await _updateDoc(_doc(db, 'conversations', cid), patch);
+      })(), 8000);
       _lastError = '';
       return;
     } catch (e) {
@@ -148,7 +160,34 @@ export async function addLetter(cid, letter) {
     }
   }
   LOCAL_STORE[cid] = LOCAL_STORE[cid] || { letters: [] };
-  LOCAL_STORE[cid].letters.push(sanitize(letter));
+  LOCAL_STORE[cid].letters.push(l);
+}
+
+// 공유 횟수 +1 ("편지 전하기" 누를 때)
+export async function incrementShare(cid) {
+  if (!cid) return;
+  await firebaseReady;
+  if (db) {
+    try { await tmo(_updateDoc(_doc(db, 'conversations', cid), { shareCount: _increment(1) }), 6000); return; }
+    catch (e) { console.warn('[incrementShare] 실패:', e.message); }
+  }
+}
+
+// (어드민) 대화 요약 전체 불러오기 — 편지 교환/공유 통계용
+export async function loadAllConversations() {
+  await firebaseReady;
+  if (db) {
+    try {
+      const snap = await _getDocs(_collection(db, 'conversations'));
+      _lastError = '';
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (e) {
+      _lastError = '대화 조회 실패: ' + e.message;
+      console.warn('[loadAllConversations] 실패:', e.message);
+      throw e;
+    }
+  }
+  return [];
 }
 
 // ── 대화 불러오기 (편지 전체, 시간순) ─────────────────────────────
@@ -206,13 +245,15 @@ export async function loadAllApplies() {
 }
 
 // ── 이벤트 응모 저장 ──────────────────────────────────────────────
-export async function saveApply({ applyId, name, phone, email, convId, referral, sentLetter }) {
+export async function saveApply({ applyId, name, phone, email, convId, referral, refMedium, refCampaign, sentLetter }) {
   await firebaseReady;
   const record = {
     applyId: applyId || ('a_' + Date.now() + '_' + Math.random().toString(36).slice(2,7)),
     name, phone, email: email || '',
     convId: convId || '',
     referral: referral || 'direct',
+    refMedium: refMedium || '',
+    refCampaign: refCampaign || '',
     sentLetter: !!sentLetter,
     createdAt: Date.now(),
   };
