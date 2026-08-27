@@ -127,7 +127,7 @@
 // ─────────────────────────────────────────────────────────────
 //  ⚙️ 관리자 비밀번호 — 아래 값을 원하는 비밀번호로 바꾸세요.
 //     (주의: 클라이언트 측 잠금이라 소스를 보면 노출됩니다. 임시 방편입니다.)
-const ADMIN_PASSWORD = "lbmomo2026!";
+const ADMIN_PASSWORD = "momo2026!";
 // ─────────────────────────────────────────────────────────────
 
 import { loadAllApplies, loadAllConversations, loadConversation, setConversationStats, getStatus, syncAllToSheet, sheetEnabled } from './firebase.js';
@@ -173,9 +173,10 @@ async function openDash(){
   $('gate').style.display='none';
   $('dash').style.display='block';
   await refresh();
+  loadConvStats();   // 편지 교환·공유 현황도 자동으로 불러오기(불러오기 버튼 안 눌러도 됨)
 }
 
-$('refresh-btn').addEventListener('click', refresh);
+$('refresh-btn').addEventListener('click', ()=>{ refresh(); loadConvStats(); });
 $('csv-btn').addEventListener('click', exportCSV);
 $('conv-load-btn').addEventListener('click', loadConvStats);
 $('conv-backfill-btn').addEventListener('click', runBackfill);
